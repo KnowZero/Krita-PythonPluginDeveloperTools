@@ -499,7 +499,7 @@ class PluginDevToolsDocker(DockWidget):
         
         def getObjDocs(self):
             if self.currentWidget:
-                url = "https://doc.qt.io/qt-5.12/" + self.currentWidget.metaObject().className() + ".html"
+                url = "https://doc.qt.io/qt-5.12/" + type(self.currentWidget).__name__ + ".html"
             
                 QDesktopServices.openUrl(QUrl(url))
 
@@ -671,9 +671,13 @@ class PluginDevToolsDocker(DockWidget):
                     if propName not in metaDict['properties']:
                         propType = prop.typeName()
                         propValue = pprint.pformat( obj.property(prop.name()) )
+                        className = None
                         
                         if inheritsFrom:
                             propType = propType + " [from "+meta.className()+"]"
+                            className = meta.className()
+                        else:
+                            className = type(obj).__name__
                             
                         metaDict['properties'][propName]={ 'class': meta.className(), 'type':9, 'name': propName, 'rec':[ propName, propType, propValue ] }
                 
@@ -681,6 +685,7 @@ class PluginDevToolsDocker(DockWidget):
                     meth = meta.method(i)
                     pnames = meth.parameterNames()
                     ptypes = meth.parameterTypes()
+                    className = None
                     
                     methName = str(meth.name(), 'utf-8') + "(" + str(b','.join( [ ptypes[i]+b" "+pnames[i] for i in range(0,meth.parameterCount()) ] ), 'utf-8') + ")"
                     if methName not in metaDict['methods']:
@@ -688,6 +693,9 @@ class PluginDevToolsDocker(DockWidget):
                         
                         if inheritsFrom:
                             methType = methType + " [from "+meta.className()+"]"
+                            className = meta.className()
+                        else:
+                            className = type(obj).__name__
                         
                         metaDict['methods'][methName]={ 'class': meta.className(), 'type':0, 'name': str(meth.name(), 'utf-8'), 'rec':[ methName, methType, meth.typeName() ] }
                 
