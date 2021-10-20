@@ -18,6 +18,7 @@ class PluginDevToolsDocker(DockWidget):
         self.firstRun = True
         self.currentTab = None
         #self.tabChanged(None)
+        self.centralWidget.tabWidget.setTabIcon( 0, Krita.instance().icon('pivot-point') )
         self.centralWidget.tabWidget.currentChanged.connect(self.tabChanged)
 
         
@@ -262,7 +263,7 @@ class PluginDevToolsDocker(DockWidget):
 
 
         def iconClicked(self, rec):
-            self.caller.centralWidget.consoleInputTextEdit.setText("Krita.instance().icon('"+ self.listModel.index( rec.row(), 0 ).data() +"')")
+            self.caller.centralWidget.consoleInputTextEdit.setText("Krita.instance().icon('"+ self.proxyModel.index( rec.row(), 0 ).data() +"')")
             self.caller.centralWidget.tabWidget.setCurrentIndex(2)
 
     class PluginDevToolsActions():
@@ -311,7 +312,7 @@ class PluginDevToolsDocker(DockWidget):
             self.proxyModel.setFilterFixedString(text)
 
         def actionClicked(self, rec):
-            self.caller.centralWidget.consoleInputTextEdit.setText("Krita.instance().action('"+ self.tableModel.index( rec.row(), 0 ).data() +"').trigger()")
+            self.caller.centralWidget.consoleInputTextEdit.setText("Krita.instance().action('"+ self.proxyModel.index( rec.row(), 0 ).data() +"').trigger()")
             self.caller.centralWidget.tabWidget.setCurrentIndex(2)
             #print ( "REC!", self.tableModel.index( rec.row(), 0 ).data() )
 
@@ -443,6 +444,15 @@ class PluginDevToolsDocker(DockWidget):
             self.tableView.setModel(self.proxyTableModel)
             
             self.treeSelectModel.selectionChanged.connect(self.itemSelectionChanged)
+            
+            
+            
+            self.caller.centralWidget.inspectorRefreshBtn.setIcon( Krita.instance().icon('view-refresh') )
+            self.caller.centralWidget.inspectorParentBtn.setIcon( Krita.instance().icon('arrow-up') )
+            self.caller.centralWidget.inspectorCodeBtn.setIcon( Krita.instance().icon('document-print-preview') )
+            self.caller.centralWidget.inspectorObjDocsBtn.setIcon( Krita.instance().icon('system-help') )
+            self.caller.centralWidget.inspectorSelectorBtn.setIcon( Krita.instance().icon('pivot-point') )
+            
             
             self.caller.centralWidget.inspectorObjDocsBtn.clicked.connect(self.getObjDocs)
             self.caller.centralWidget.inspectorPropDocsBtn.clicked.connect(self.getPropDocs)
