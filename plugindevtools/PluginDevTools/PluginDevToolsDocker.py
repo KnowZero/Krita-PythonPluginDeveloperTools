@@ -328,37 +328,70 @@ class PluginDevToolsDocker(DockWidget):
             self.currentWidget = None
             self.currentWindow = None
             
-            self.selectorWidget = QWidget(caller.qwin)
-            #self.selectorWidget.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.WindowTransparentForInput)
-            self.selectorWidget.setWindowFlags(Qt.WindowTransparentForInput)
-            self.selectorWidget.setAttribute( Qt.WA_TransparentForMouseEvents );
-            self.selectorWidget.setVisible(False)
-            self.selectorWidget.setStyleSheet("background-color: rgba(0, 0, 155, 50); border: 1px solid #000080;");
+            
+            
+            self.useStyleSheet = "*[DevToolsHoverWithSelector='true'] { background-color: rgba(0, 0, 155, 50); border: 1px solid #000080; }"
+            self.useStyleSheet = None
+            
+            #self.caller.qwin.setStyleSheet( self.caller.qwin.styleSheet() + '*[DevToolsHoverWithSelector="true"] { background-color: rgba(0, 0, 155, 50); border: 1px solid #000080; }' )
+            self.createSelector(self.caller.qwin)
+            
+        def createSelector(self, window):
+            #print ("create selector!")
+            selectorWidget = QWidget(window)
+            selectorWidget.setObjectName("DevToolsSelectorWidget")
+            #selectorWidget.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.WindowTransparentForInput)
+            selectorWidget.setWindowFlags(Qt.WindowTransparentForInput)
+            selectorWidget.setAttribute( Qt.WA_TransparentForMouseEvents )
+            selectorWidget.setVisible(False)
+            selectorWidget.setStyleSheet("background-color: rgba(0, 0, 155, 50); border: 1px solid #000080;")
+            #print ("selector id", selectorWidget)
+            self.selectorWidget = selectorWidget
             
         def selected(self):
-            self.startSampling(self.caller.qwin)    
+            self.startSampling(QtWidgets.qApp.activeWindow())    
 
         def unselected(self):
             self.stopSampling()    
             
         def startSampling(self, window):
             self.currentWindow = window
-            winStyle = window.styleSheet()
+            #>winStyle = window.styleSheet()
             #>if "DevToolsHoverWithSelector=" not in winStyle:
             #>    window.setStyleSheet( winStyle + '*[DevToolsHoverWithSelector="true"] { background-color: #000000; border: 3px solid #FF0000; color: #FF0000 }' )
-            #QtWidgets.qApp.focusChanged.connect(self.focusItem)
-            window.installEventFilter(self.windowFilter)
-            
+            QtWidgets.qApp.focusChanged.connect(self.focusItem)
+            QtWidgets.qApp.installEventFilter(self.windowFilter)
+            #>>>window.installEventFilter(self.windowFilter)
+        
+        def focusItem(self):
+            #if self.currentWindow is not QApplication.activePopupWidget():
+            #    print ("POPUP CHANGE!")
+            win = QtWidgets.qApp.activeWindow()
+            if self.currentWindow is not win:
+                if win:
+                    self.selectorWidget.setVisible(False)
+                    wid = win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindDirectChildrenOnly)
+                    if wid:
+                        self.selectorWidget = wid
+                    else:
+                        self.createSelector(win)
+                        # event filter never happens
+                    self.currentWindow = win
+                #print ("FOCUS CHANGED!", win, QApplication.activeModalWidget(), QApplication.activePopupWidget())
 
         def stopSampling(self, localCall = True):
             if self.currentWindow:
-                self.currentWindow.removeEventFilter(self.windowFilter)
+                if localCall:
+                    QtWidgets.qApp.focusChanged.disconnect(self.focusItem)
+                    QtWidgets.qApp.installEventFilter(self.windowFilter)
+                #??self.currentWindow.removeEventFilter(self.windowFilter)
                 self.currentWindow = None
             self.selectorWidget.setVisible(False)
                 
             if self.currentWidget:
-                #>self.currentWidget.setProperty('DevToolsHoverWithSelector', False)
-                #>self.currentWidget.setStyle(self.currentWidget.style())
+                if self.useStyleSheet:
+                    self.currentWidget.setProperty('DevToolsHoverWithSelector', False)
+                    self.currentWidget.setStyleSheet(self.currentWidget.styleSheet().replace(self.useStyleSheet,'') )
                 #>>self.caller.t['inspector'].selectItemByRef(self.currentWidget)
                 if localCall:
                     self.caller.centralWidget.selectorOutputLabel.setText("None")
@@ -367,23 +400,37 @@ class PluginDevToolsDocker(DockWidget):
                 
         def finishedSampling(self):
             self.caller.centralWidget.tabWidget.setCurrentIndex(1)
+            
+        def findAncestor(self, ancestor, obj):
+            parent = obj.parent()
+            while True:
+                if not parent:
+                    return False
+                elif ancestor is parent:
+                    return True
+                obj = parent
+                parent = obj.parent()
                 
         def setCurrentSelector(self, obj, localCall = True):
-            if obj and obj is not self.currentWidget:
+            if obj and obj is not self.currentWidget and self.findAncestor(self.currentWindow,obj):
                 self.selectorWidget.setVisible(True)
-                #>if self.currentWidget:
-                #>    self.currentWidget.setProperty('DevToolsHoverWithSelector', False)
-                #>    self.currentWidget.setStyle(self.currentWidget.style())
-                #>obj.setProperty('DevToolsHoverWithSelector', True)
-                #>obj.setStyle(obj.style())
+
+                if self.useStyleSheet:
+                    if self.currentWidget:
+                        self.currentWidget.setProperty('DevToolsHoverWithSelector', False)
+                        self.currentWidget.setStyleSheet(self.currentWidget.styleSheet().replace(self.useStyleSheet,""))
+                    obj.setProperty('DevToolsHoverWithSelector', True)
+                    obj.setStyleSheet(obj.styleSheet() + self.useStyleSheet)
+                    obj.update()
+                
                 rect = obj.geometry()
-                pos = obj.mapTo(self.caller.qwin, QPoint(0,0) )
+                pos = obj.mapTo(self.currentWindow, QPoint(0,0) )
                 rect.moveTo(pos)
                 
                 self.selectorWidget.setGeometry( rect )
                 #obj.mapToGlobal(widgetRect.topLeft())
                 
-                #obj.update()
+                
                 #print (obj.property('DevToolsHoverWithSelector') )
                 self.currentWidget = obj
                 if localCall: self.caller.centralWidget.selectorOutputLabel.setText("[" + type(obj).__name__ + "] " + obj.objectName())
@@ -396,7 +443,12 @@ class PluginDevToolsDocker(DockWidget):
             
             def eventFilter(self, obj, event):
                 etype = event.type()
+                
                 if etype == 129 or (etype == 6 and event.key() == Qt.Key_Shift):
+                    if etype == 6 and event.key() == Qt.Key_Shift:
+                        win = QtWidgets.qApp.activeWindow()
+                        self.caller.selectorWidget=win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindDirectChildrenOnly)
+                    
                     if QApplication.keyboardModifiers() == Qt.ShiftModifier:
                         pos = QCursor.pos()
                         onWidget = QApplication.widgetAt(pos)
@@ -480,6 +532,9 @@ class PluginDevToolsDocker(DockWidget):
             pass
         
         def showCurrentWidget(self):
+            #print ("show current!", self.currentWidget)
+            self.caller.t['selector'].currentWindow = win = QtWidgets.qApp.activeWindow()
+            self.caller.t['selector'].selectorWidget=win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindDirectChildrenOnly)
             self.caller.t['selector'].setCurrentSelector(self.currentWidget, False)
             
             
