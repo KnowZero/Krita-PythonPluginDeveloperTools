@@ -15,14 +15,16 @@ class PluginDevToolsDocker(DockWidget):
         self.centralWidget = uic.loadUi(os.path.dirname(os.path.realpath(__file__)) + '/DockerWidget.ui')
         
         self.setWidget(self.centralWidget)
+        self.firstRun = True
+        self.currentTab = None
+        #self.tabChanged(None)
+        self.centralWidget.tabWidget.currentChanged.connect(self.tabChanged)
 
-        self.notify = Krita.instance().notifier()
-        self.notify.setActive(True)
-        self.notify.windowCreated.connect(self.windowCreatedSetup)
+        
 
     
     def windowCreatedSetup(self):
-        self.notify.windowCreated.disconnect(self.windowCreatedSetup)
+
         
         self.t = {}
         
@@ -38,13 +40,17 @@ class PluginDevToolsDocker(DockWidget):
 
         
         
-        self.tabChanged(None)
-        self.centralWidget.tabWidget.currentChanged.connect(self.tabChanged)
+
         
             
     def tabChanged(self, idx):
         if idx is not None:
-            self.t[self.currentTab].unselected()
+            if self.firstRun:
+                self.firstRun = False
+                self.windowCreatedSetup()
+
+            if self.currentTab:    
+                self.t[self.currentTab].unselected()
         self.currentTab = self.centralWidget.tabWidget.currentWidget().objectName().replace('Tab','')
         print ("ON", self.currentTab)
         self.t[self.currentTab].selected()
