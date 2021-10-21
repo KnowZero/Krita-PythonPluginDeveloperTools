@@ -184,6 +184,11 @@ class PluginDevToolsDocker(DockWidget):
         def searchTreeFilter(self, text):
             self.proxyModel.setFilterFixedString(text)
             self.kritaapiTreeView.expandAll()
+            
+            indexes = self.kritaapiTreeView.selectionModel().selectedIndexes()
+                       
+            if indexes:
+                self.kritaapiTreeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
 
 
         def genMethodList(self, obj, meta ):
@@ -841,6 +846,13 @@ class PluginDevToolsDocker(DockWidget):
                 self.proxyTreeModel.setFilterFixedString("")
                 
             #self.proxyTreeModel.setFilterWildcard("*{}*".format(text))
+            
+            indexes = self.treeView.selectionModel().selectedIndexes()
+                       
+            if indexes:
+                self.treeView.expand(self.proxyTreeModel.mapFromSource( indexes[0] ))
+                self.treeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
+                self.treeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
 
         
         def selectItemByRef(self, obj):
