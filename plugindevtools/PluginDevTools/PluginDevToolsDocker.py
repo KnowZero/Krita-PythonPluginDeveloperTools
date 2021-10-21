@@ -5,6 +5,8 @@ import pprint
 import time
 from contextlib import redirect_stdout
 import io
+import re
+
 
 class PluginDevToolsDocker(DockWidget):
     def __init__(self):
@@ -38,7 +40,7 @@ class PluginDevToolsDocker(DockWidget):
         self.t['console'] = self.PluginDevToolsConsole(self)
         self.t['icons'] = self.PluginDevToolsIcons(self)
         self.t['actions'] = self.PluginDevToolsActions(self)
-
+        self.t['kritaapi'] = self.PluginDevToolsKritaAPI(self)
         
         
 
@@ -71,6 +73,188 @@ class PluginDevToolsDocker(DockWidget):
         
         def unselected(self):
             pass
+
+    class PluginDevToolsKritaAPI():
+        def __init__(self, caller):
+            super().__init__()
+            self.caller = caller
+            
+            self.kritaapiTreeView = self.caller.centralWidget.kritaapiTreeView
+            self.kritaapiModel = QStandardItemModel()
+
+            self.proxyModel = QSortFilterProxyModel()
+
+            self.proxyModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+            self.proxyModel.setFilterKeyColumn(-1)
+            self.proxyModel.setRecursiveFilteringEnabled(True)
+
+            self.proxyModel.setSourceModel(self.kritaapiModel)
+            self.kritaapiTreeView.setModel(self.proxyModel)
+            
+            self.kritaapiModel.setHorizontalHeaderLabels(['Method', 'Return Type', 'Description'])
+            
+            self.firstRun = True
+            
+
+            
+            
+
+
+        def selected(self):
+            if self.firstRun:
+                self.firstRun = False
+                rootItem = self.kritaapiModel.invisibleRootItem()
+                
+                
+                item = QStandardItem("Krita.instance()")
+                
+                rootItem.appendRow([
+                    item,
+                    QStandardItem(""),
+                    QStandardItem("")
+                ])
+                
+                metaDict = self.genMethodList( Krita.instance(), Krita.__dict__ )
+                
+                for k, prop in sorted(metaDict['methods'].items()):
+                    item.appendRow([
+                        QStandardItem(prop['rec'][0]),
+                        QStandardItem(prop['rec'][2]),
+                        QStandardItem("")
+                    ])
+                    
+
+
+                for k in dir(krita):
+                    if k.startswith('__'): continue
+                    item = QStandardItem(k)
+                    
+                    classMeta = getattr(krita, k)
+                    
+                    rootItem.appendRow([
+                        item,
+                        QStandardItem( "" ),
+                        QStandardItem("")
+                    ])
+                    
+                    
+                    
+                    #if hasattr(className,'staticMetaObject'):
+    
+                    
+                    metaDict = self.genMethodList( classMeta, classMeta.__dict__ )
+
+                
+                    for k, prop in sorted(metaDict['methods'].items()):
+                        item.appendRow([
+                            QStandardItem(prop['rec'][0]),
+                            QStandardItem(prop['rec'][2]),
+                            QStandardItem(prop['rec'][1])
+                        ])
+                        
+                        
+                    if hasattr(classMeta,'staticMetaObject'):
+                        parentMetaClass = classMeta.staticMetaObject.superClass()
+                        
+                        if parentMetaClass and not parentMetaClass.className().startswith('Q') and not parentMetaClass.className().startswith('Kis'):
+                            parentMeta = getattr(krita, parentMetaClass.className())
+                            
+                            parentItem = QStandardItem("Inherited from " + parentMetaClass.className() )
+                            item.appendRow([
+                                parentItem,
+                                QStandardItem(""),
+                                QStandardItem("")
+                            ])
+                            
+                            metaDict2 = self.genMethodList( parentMeta, parentMeta.__dict__ )
+                            
+                            for k2, prop2 in sorted(metaDict2['methods'].items()):
+                                parentItem.appendRow([
+                                    QStandardItem(prop2['rec'][0]),
+                                    QStandardItem(prop2['rec'][2]),
+                                    QStandardItem(prop2['rec'][1])
+                                ])
+                
+                self.caller.centralWidget.kritaapiFilter.textChanged.connect(self.searchTreeFilter)
+                self.kritaapiTreeView.expandAll()   
+        
+        def unselected(self):
+            pass
+
+        def searchTreeFilter(self, text):
+            self.proxyModel.setFilterFixedString(text)
+            self.kritaapiTreeView.expandAll()
+
+
+        def genMethodList(self, obj, meta ):
+            metaDict = { 'properties':{}, 'methods':{} }
+            metaDict2 = { 'properties':{}, 'methods':{} }
+            
+            if hasattr(obj,'staticMetaObject'):
+                metaDict2 = self.genMethodList2(obj, obj.staticMetaObject)
+             
+            for key in meta.keys():
+                if not key.startswith('__'):
+                    doc = getattr(obj,key).__doc__
+                    
+                    if doc:
+                        propName = doc.split(' -> ')
+                        if '(self' not in propName[0]:
+                            propName[0] = "" + "." + propName[0]
+                        else:
+                            propName[0] = propName[0].replace('(self, ','(').replace('(self','(')
+                        
+                        propName2 = ''
+                        
+                        if key in metaDict2['methods']:
+                            #print ("FOUND", key)
+                            propName2 = metaDict2['methods'][key]['rec'][0]
+                        
+                        metaDict['methods'][propName[0]]={ 'class': '', 'type':8, 'name': propName, 'rec':[ propName[0], propName2, (propName[1] if len(propName) == 2 else 'void')  ] }
+                
+            return metaDict
+        
+        def genMethodList2(self, obj, meta):
+            
+            metaDict = { 'properties':{}, 'methods':{}, 'classes':{} }
+        
+            for i in range(meta.propertyOffset(), meta.propertyCount(), 1 ):
+                prop = meta.property(i)
+                propName = prop.name()
+                
+                propName = propName[0].lower() + propName[1:]
+                
+                if propName not in metaDict['properties']:
+                    #print ("PROP", propName, dir(obj) )
+                    propType = prop.typeName()
+                    propValue = pprint.pformat( getattr(obj, propName) )
+                    
+                    className = ''#type(obj).__name__
+                    
+
+                        
+                    metaDict['properties'][propName]={ 'class': className, 'type':9, 'name': propName, 'rec':[ propName, propType, propValue ] }
+            
+            for i in range(meta.methodOffset(), meta.methodCount(), 1 ):
+                meth = meta.method(i)
+                pnames = meth.parameterNames()
+                ptypes = meth.parameterTypes()
+                className = None
+                
+                methName = str(meth.name(), 'utf-8') + "(" + str(b','.join( [ ptypes[i]+b" "+pnames[i] for i in range(0,meth.parameterCount()) ] ), 'utf-8') + ")"
+                if methName not in metaDict['methods']:
+                    methType = self.caller.t['inspector'].METHOD_ACCESS[int(meth.access())] + " " + self.caller.t['inspector'].METHOD_TYPES[int(meth.methodType())]
+                    
+                    className = ''#type(obj).__name__
+                    
+                    methShortName = str(meth.name(), 'utf-8')
+                    if methShortName in metaDict['methods']:
+                        metaDict['methods'][methShortName]['rec'][0] += "\n" + methName
+                    else:    
+                        metaDict['methods'][methShortName]={ 'class': className, 'type':0, 'name': methShortName, 'rec':[ methName, methType, meth.typeName() ] }
+                    #>>metaDict['methods'][methName]={ 'class': className, 'type':0, 'name': str(meth.name(), 'utf-8'), 'rec':[ methName, methType, meth.typeName() ] }
+
+            return metaDict
 
     class PluginDevToolsConsole():
         def __init__(self, caller):

@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>5</number>
+      <number>6</number>
      </property>
      <widget class="QWidget" name="selectorTab">
       <attribute name="icon">
@@ -341,6 +341,40 @@
          </attribute>
          <attribute name="verticalHeaderVisible">
           <bool>false</bool>
+         </attribute>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="kritaapiTab">
+      <attribute name="title">
+       <string>Krita API</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_12">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QLineEdit" name="kritaapiFilter">
+           <property name="placeholderText">
+            <string>Filter...</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="kritaapiVersionCmb">
+           <item>
+            <property name="text">
+             <string>Current</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QTreeView" name="kritaapiTreeView">
+         <attribute name="headerDefaultSectionSize">
+          <number>350</number>
          </attribute>
         </widget>
        </item>
