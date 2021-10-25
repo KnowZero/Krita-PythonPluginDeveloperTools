@@ -6,11 +6,27 @@ import time
 from contextlib import redirect_stdout
 import io
 import re
+import json
 
+
+from .GetKritaAPI import *
+#import asyncio
+#from concurrent.futures import ProcessPoolExecutor
 
 class PluginDevToolsDocker(DockWidget):
     def __init__(self):
         super().__init__()
+        
+        settingsData = Krita.instance().readSetting("", "pluginDevToolsSettings","")
+        
+        if settingsData.startswith('{'):
+            self.settings = json.loads(settingsData)
+        else:
+            self.settings = {
+                'kritaapi':{}
+            }
+        
+        self.kritaAPI = {}
         
         self.setWindowTitle("Plugin Developer Tools")
        
@@ -79,6 +95,9 @@ class PluginDevToolsDocker(DockWidget):
             super().__init__()
             self.caller = caller
             
+            self.currentAPI = None
+            
+            self.kritaapiTextBrowser = self.caller.centralWidget.kritaapiTextBrowser
             self.kritaapiTreeView = self.caller.centralWidget.kritaapiTreeView
             self.kritaapiModel = QStandardItemModel()
 
@@ -91,92 +110,238 @@ class PluginDevToolsDocker(DockWidget):
             self.proxyModel.setSourceModel(self.kritaapiModel)
             self.kritaapiTreeView.setModel(self.proxyModel)
             
-            self.kritaapiModel.setHorizontalHeaderLabels(['Method', 'Return Type', 'Description'])
+            self.kritaTreeSelectModel = self.kritaapiTreeView.selectionModel()
+            self.kritaTreeSelectModel.selectionChanged.connect(self.itemSelectionChanged)
+            
+            self.caller.centralWidget.kritaapiGenAutoComplete.setIcon( Krita.instance().icon('document-export') )
+            self.caller.centralWidget.kritaapiDownload.setIcon( Krita.instance().icon('merge-layer-below') )
             
             self.firstRun = True
             
 
             
+        def itemSelectionChanged(self, new, old):
+            #index = self.kritaapiTreeView.currentIndex()
+            #print ("selected", index)
+            indexes = new.indexes()
+            if indexes:
+                self.kritaapiTextBrowser.setText( indexes[0].data(101) )
             
+            #if index:
+            #    prop = self.proxyModel.index(index.row(), 0).data(101)
+            #    self.kritaapiTextBrowser.setText( prop if prop else "" )
 
 
         def selected(self):
             if self.firstRun:
                 self.firstRun = False
-                rootItem = self.kritaapiModel.invisibleRootItem()
+                
+                ver = (Krita.instance().version().split('-'))[0]
+                
+                if ver not in self.caller.settings['kritaapi']:
+                    self.downloadKritaAPI()
+                
+                self.fillItems()
+        
+        def formatDoc(self, doc):
+            start = doc.find('@code')
+            if start > -1:
+                end = doc.find('@endcode',start)
+                doc = doc.replace( doc[start:end], doc[start:end].replace('<','&lt;') )
+            
+
+            doc = '<br>'.join(doc.split('\n'))
+            doc = re.sub(r'\@(param|brief|return|returns) (\w+?) ',r'<b>@\1 \2</b> ', doc).replace('the</b>','</b>the').replace('a</b>','</b>a').replace('The</b>','</b>The').replace('A</b>','</b>A')
+            doc = re.sub(r'\@(param) (\w+?)</b>',r'@param <u>\2</u></b>', doc)
+            doc = doc.replace('@code','<div style="background-color: rgba(0,0,0,0.3); margin: 4px"><pre><code>').replace('@endcode','</code></pre></div>')
+                              
+            return doc
+        
+        def fillItems(self):
+            
+            ver = (Krita.instance().version().split('-'))[0]
+            
+            if os.path.exists( os.path.dirname(os.path.realpath(__file__)) + '.KritaAPI.'+ver+'.zip' ):
+                getAPI = GetKritaAPI()
+
+                self.caller.kritaAPI[ver] = getAPI.parseData(ver)
+            
+            if ver in self.caller.kritaAPI:
+                self.currentAPI = self.caller.kritaAPI[ver]
+            
+            self.kritaapiModel.setHorizontalHeaderLabels([
+                'Method', 
+                'Declare/Return Type', 
+                #'Description'
+                ])
+            rootItem = self.kritaapiModel.invisibleRootItem()
+            
+            
+            item = QStandardItem("Krita.instance()")
+            
+            metaDict = self.genMethodList( 'Krita', Krita.instance(), Krita.__dict__ )
+            
+            rootItem.appendRow([
+                item,
+                QStandardItem( metaDict['declare'] if metaDict['declare'] else "\n" ),
+                #QStandardItem("")
+            ])
+            
+            
+            
+            kritaClassItem = rootItem.child(rootItem.rowCount() - 1)
+            kritaClassItem.setData( self.formatDoc(metaDict['doc']) , 101 )
+            
+            for k, prop in sorted(metaDict['methods'].items()):
+                kritaClassItem.appendRow([
+                    QStandardItem(prop['rec'][0]),
+                    QStandardItem(prop['rec'][2]),
+                    #QStandardItem( self.formatDoc(prop['doc']) )
+                ])
+                methodItem = kritaClassItem.child(kritaClassItem.rowCount() - 1)
+                methodItem.setData( self.formatDoc(prop['doc']), 101 )
+
+
+            for k in dir(krita):
+                if k.startswith('__') or k == 'Krita': continue
+                item = QStandardItem(k)
+                
+                extraData = None
+                
+                classMeta = getattr(krita, k)
+                metaDict = self.genMethodList( k, classMeta, classMeta.__dict__ )
                 
                 
-                item = QStandardItem("Krita.instance()")
                 
                 rootItem.appendRow([
                     item,
-                    QStandardItem(""),
-                    QStandardItem("")
+                    QStandardItem( metaDict['declare'] if metaDict['declare'] else "\n" ),
+                    #QStandardItem("")
                 ])
                 
-                metaDict = self.genMethodList( Krita.instance(), Krita.__dict__ )
+
                 
-                for k, prop in sorted(metaDict['methods'].items()):
-                    item.appendRow([
-                        QStandardItem(prop['rec'][0]),
+                classItem = rootItem.child(rootItem.rowCount() - 1)
+                classItem.setData( self.formatDoc(metaDict['doc']), 101 )
+            
+                for k1, prop in sorted(metaDict['methods'].items()):
+                    subitem = QStandardItem(prop['rec'][0])
+                    
+                    classItem.appendRow([
+                        subitem,
                         QStandardItem(prop['rec'][2]),
-                        QStandardItem("")
+                        #>>QStandardItem(prop['rec'][1])
+                        #QStandardItem( self.formatDoc(prop['doc']) )
                     ])
                     
-
-
-                for k in dir(krita):
-                    if k.startswith('__'): continue
-                    item = QStandardItem(k)
-                    
-                    classMeta = getattr(krita, k)
-                    
-                    rootItem.appendRow([
-                        item,
-                        QStandardItem( "" ),
-                        QStandardItem("")
-                    ])
+                    #print ("PROP", prop['name'], '' )
+                    #if extraData and k in extraData and prop['name'] in extraData[k]['methods']:
+                    methodItem = classItem.child(classItem.rowCount() - 1)
+                    methodItem.setData( self.formatDoc(prop['doc']), 101 )
                     
                     
+                if hasattr(classMeta,'staticMetaObject'):
+                    parentMetaClass = classMeta.staticMetaObject.superClass()
                     
-                    #if hasattr(className,'staticMetaObject'):
-    
-                    
-                    metaDict = self.genMethodList( classMeta, classMeta.__dict__ )
-
-                
-                    for k, prop in sorted(metaDict['methods'].items()):
-                        item.appendRow([
-                            QStandardItem(prop['rec'][0]),
-                            QStandardItem(prop['rec'][2]),
-                            QStandardItem(prop['rec'][1])
+                    if parentMetaClass and not parentMetaClass.className().startswith('Q') and not parentMetaClass.className().startswith('Kis'):
+                        parentMeta = getattr(krita, parentMetaClass.className())
+                        
+                        parentItem = QStandardItem("Inherited from " + parentMetaClass.className() )
+                        classItem.appendRow([
+                            parentItem,
+                            QStandardItem(""),
+                            #QStandardItem("")
                         ])
                         
                         
-                    if hasattr(classMeta,'staticMetaObject'):
-                        parentMetaClass = classMeta.staticMetaObject.superClass()
+                        iclassItem = classItem.child(classItem.rowCount() - 1)
+                        if self.currentAPI and parentMetaClass.className() in self.currentAPI:
+                            iclassItem.setData( self.formatDoc(self.currentAPI[parentMetaClass.className()]['doc']) , 101 )
+
                         
-                        if parentMetaClass and not parentMetaClass.className().startswith('Q') and not parentMetaClass.className().startswith('Kis'):
-                            parentMeta = getattr(krita, parentMetaClass.className())
-                            
-                            parentItem = QStandardItem("Inherited from " + parentMetaClass.className() )
-                            item.appendRow([
-                                parentItem,
-                                QStandardItem(""),
-                                QStandardItem("")
+                        metaDict2 = self.genMethodList( parentMetaClass.className(), parentMeta, parentMeta.__dict__ )
+                        
+                        
+                        
+                        for k2, prop2 in sorted(metaDict2['methods'].items()):
+                            iclassItem.appendRow([
+                                QStandardItem(prop2['rec'][0]),
+                                QStandardItem(prop2['rec'][2]),
+                                #QStandardItem(prop2['rec'][1])
                             ])
-                            
-                            metaDict2 = self.genMethodList( parentMeta, parentMeta.__dict__ )
-                            
-                            for k2, prop2 in sorted(metaDict2['methods'].items()):
-                                parentItem.appendRow([
-                                    QStandardItem(prop2['rec'][0]),
-                                    QStandardItem(prop2['rec'][2]),
-                                    QStandardItem(prop2['rec'][1])
-                                ])
+                            imethodItem = iclassItem.child(iclassItem.rowCount() - 1)
+                            imethodItem.setData( self.formatDoc(prop2['doc']), 101 )
+            
+            self.caller.centralWidget.kritaapiDownload.clicked.connect(self.downloadKritaAPI)
+            self.caller.centralWidget.kritaapiGenAutoComplete.clicked.connect(self.exportKritaAPI)
+            self.caller.centralWidget.kritaapiFilter.textChanged.connect(self.searchTreeFilter)
+            self.kritaapiTreeView.expandAll()   
+    
+        def exportKritaAPI(self):
+            getAPI = GetKritaAPI()
+            ver = (Krita.instance().version().split('-'))[0]
+            content = getAPI.genAutoComplete(ver)
+            
+            filename, _ = QFileDialog.getSaveFileName(
+                caption="Save Auto Complete file", directory='PyKrita.py', filter="Python files (*.py)"
+            )
+            if filename:
+                f = open(filename, "w")
+                f.write(content)
+                f.close()
+
+        
+        def downloadKritaAPI(self):
+            ver = (Krita.instance().version().split('-'))[0]
+            msgbox = QMessageBox(QMessageBox.Question,'Would you like to download the API details automatically?', 
+                                       '', QMessageBox.Yes | QMessageBox.No)
+            msgbox.setTextFormat(Qt.RichText)
+            
+            msgbox.setText("""Developer Tools would like to connect to the internet to download Krita API details.
+This process will only access Krita's offical git repository at invent.kde.org.
+<hr>
+The API is still accessable even without downloading this file, but may not be fully complete, no documentation will be available and you will not be able to generate autocomplete files.
+<hr>                            
+You can also do this manually by downloading the following (Unless you are on Krita Next nightly, 'master' should be replaced with the tag you plan to target, ex. 'v"""+ver+"""' or 'v"""+ver+"""-beta1'):<br>
+<u>https://invent.kde.org/graphics/krita/-/archive/master/krita-master.zip?path=libs/libkis</u>
+<br>
+And place it in:<br>
+<u>""" + os.path.dirname(os.path.realpath(__file__)) + """.KritaAPI."""+ver+""".zip</u>
+<hr>
+This only needs to be done once per new version of Krita. Do note that Krita may freeze up for about a minute.
+<hr>
+Would you like to download the API details(less than 200kb of data) automatically?
+""")
+
+            if msgbox.exec() == QMessageBox.Yes:
+                getAPI = GetKritaAPI()
+                res = getAPI.updateData(ver)
                 
-                self.caller.centralWidget.kritaapiFilter.textChanged.connect(self.searchTreeFilter)
-                self.kritaapiTreeView.expandAll()   
+                if res['status'] == 0:
+                    msgbox = QMessageBox(QMessageBox.Warning,'Error',str(res['error']))
+           
+                    msgbox.exec()
+                    print ( "ERROR!", str(e) )
+                    return
+                else:
+                    QMessageBox(QMessageBox.Information,'Success!', "API details have been downloaded successfully!").exec()
+                
+                self.caller.kritaAPI[ver] = getAPI.parseData(ver)
+                
+                self.caller.settings['kritaapi'][ver] = { 'updated':res['data']['updated'] }
+            
+                Krita.instance().writeSetting("", "pluginDevToolsSettings", json.dumps(self.caller.settings) )
+                
+                #print ("CCC", self.caller.kritaAPI[ver] )
+                self.kritaapiModel.clear()
+                self.fillItems()
+            else:
+                self.caller.settings['kritaapi'][ver] = { 'updated':'0000-00-00T00:00:00' }
+            
+                Krita.instance().writeSetting("", "pluginDevToolsSettings", json.dumps(self.caller.settings) )
+    
+    
+        
         
         def unselected(self):
             pass
@@ -191,32 +356,112 @@ class PluginDevToolsDocker(DockWidget):
                 self.kritaapiTreeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
 
 
-        def genMethodList(self, obj, meta ):
-            metaDict = { 'properties':{}, 'methods':{} }
-            metaDict2 = { 'properties':{}, 'methods':{} }
+
+        def genMethodList(self, className, obj, meta ):
+            declareMethod = obj.__doc__ + "\n" if obj.__doc__ else ""
+            metaDict = { 'properties':{}, 'methods':{}, 'doc':"\n\n@declare Methods\n\n@code" + declareMethod + "@endcode", 'declare': declareMethod }
+            metaDict2 = { 'properties':{}, 'methods':{}, 'declare':[] }
             
-            if hasattr(obj,'staticMetaObject'):
+            proxyObj = {}
+           
+            if self.currentAPI and className in self.currentAPI:
+                #print ("META3!", className)
+                metaDict2 = self.genMethodList3(className, self.currentAPI[ className ] )
+                metaDict['doc'] = self.currentAPI[ className ]['doc'] + "\n\n@declare Methods\n\n@code" + declareMethod + "@endcode\n"
+            
+                for key in metaDict2['methods']:
+                    if key not in meta.keys() and key != className:
+                        #print ("proxy",metaDict2['methods'][key]['rec'])
+                        proxyObj[key] = {
+                            '__doc__': metaDict2['methods'][key]['rec'][0] + " -> " + metaDict2['methods'][key]['rec'][2],
+                            }
+
+                for decl in metaDict2['declare']:
+                    metaDict['declare'] += decl['rec'][0] + " -> " + decl['rec'][2] + "\n"
+                    metaDict['doc'] += "\n" + decl['doc'] + "\n@code" + decl['rec'][0] + " -> " + decl['rec'][2] + "@endcode\n"
+            
+            elif hasattr(obj,'staticMetaObject'):
                 metaDict2 = self.genMethodList2(obj, obj.staticMetaObject)
+                
+                for key in metaDict2['methods']:
+                    if key not in meta.keys() and key != className:
+                        #print ("proxy",metaDict2['methods'][key]['rec'])
+                        proxyObj[key] = {
+                            '__doc__': metaDict2['methods'][key]['rec'][0] + " -> " + metaDict2['methods'][key]['rec'][2],
+                            }
              
-            for key in meta.keys():
+            for key in list(meta.keys()) + list(proxyObj.keys()):
                 if not key.startswith('__'):
-                    doc = getattr(obj,key).__doc__
+                    doc = proxyObj[key]['__doc__'] if key in proxyObj else getattr(obj,key).__doc__
                     
                     if doc:
+                        staticMethod = False
+
                         propName = doc.split(' -> ')
-                        if '(self' not in propName[0]:
-                            propName[0] = "" + "." + propName[0]
+                        if '(self' not in propName[0] and key not in proxyObj:
+                            staticMethod = True
                         else:
                             propName[0] = propName[0].replace('(self, ','(').replace('(self','(')
                         
                         propName2 = ''
                         
-                        if key in metaDict2['methods']:
-                            #print ("FOUND", key)
-                            propName2 = metaDict2['methods'][key]['rec'][0]
+                        propName[0] = re.sub(r"(Union\[.+?\])", lambda s: ' | '.join(s.group(1).split(', ')), propName[0] )
+                        propName[0] = re.sub(r"(Dict\[.+?\])", lambda s: ' ; '.join(s.group(1).split(', ')), propName[0] )
+                        propDoc = ''
                         
-                        metaDict['methods'][propName[0]]={ 'class': '', 'type':8, 'name': propName, 'rec':[ propName[0], propName2, (propName[1] if len(propName) == 2 else 'void')  ] }
+                        if key in metaDict2['methods']:
+                            #print ("FOUND", key, metaDict2['methods'][key]['doc'])
+                            propDoc = metaDict2['methods'][key]['doc']
+                            propName2 = metaDict2['methods'][key]['rec'][0]
+
+                            if key in proxyObj:
+                                propName[0] = propName2 + ' {*}'
+                                propDoc += "\n\n{*} Method is not located in " + className + ".sip. This means the method is either private, internal use only or a developer forgot to add it"
+                            else:
+                                propName[0] = re.sub(
+                                    r"\((.+)\)", 
+                                    lambda s: "(" + ', '.join( [  metaDict2['methods'][key]['pnames'][i] + ': ' + v  for i, v in enumerate(s.group(1).split(', ')) ]  ) + ")", 
+                                    propName[0]
+                                )
+                            if 'Private' in metaDict2['methods'][key]['rec'][1]:
+                                propName[0] = propName[0] + " [private]"
+                            #del metaDict2['methods'][key] #testing
+                            
+                        if staticMethod:
+                            propName[0] = propName[0] + " [static]"
+
+                        metaDict['methods'][propName[0]]={ 'class': className, 'type':8, 'doc':propDoc, 'name': key, 'rec':[ propName[0], '', (propName[1] if len(propName) == 2 else 'void')  ] }
                 
+            
+            for t in metaDict2['methods']:
+                metaDict2['methods'][t]={}
+            #print ("EXTRA", className, metaDict2  )
+            return metaDict
+
+        def genMethodList3(self, className, meta):
+            metaDict = { 'properties':{}, 'methods':{}, 'classes':{}, 'declare':[] }
+        
+            for key in meta['methods']:
+                #print ("key", key)
+                #print ("m", meta['methods'][key])
+                metaDict['methods'][key]={ 
+                    'doc': meta['methods'][key]['doc'], 
+                    'class': className, 
+                    'type':0, 
+                    'name': key, 
+                    'pnames': [ p['name'] for p in meta['methods'][key]['params'] ], 
+                    'rec':[ key+'('+', '.join([ p['type']+' '+p['name']+('='+p['optional'] if p['optional'] else '') for p in meta['methods'][key]['params'] ])+')', meta['methods'][key]['access'], meta['methods'][key]['return'] ] }
+
+            for declare in meta['declare']:
+                #print ("m", declare)
+                metaDict['declare'].append({ 
+                    'doc': declare['doc'], 
+                    'class': className, 
+                    'type':0, 
+                    'name': className, 
+                    'pnames': [ p['name'] for p in declare['params'] ], 
+                    'rec':[ className+'('+', '.join([ p['type']+' '+p['name']+('='+p['optional'] if p['optional'] else '') for p in declare['params'] ])+')', declare['access'], className ] })
+
             return metaDict
         
         def genMethodList2(self, obj, meta):
@@ -255,8 +500,10 @@ class PluginDevToolsDocker(DockWidget):
                     methShortName = str(meth.name(), 'utf-8')
                     if methShortName in metaDict['methods']:
                         metaDict['methods'][methShortName]['rec'][0] += "\n" + methName
+                        if len(pnames) > len(metaDict['methods'][methShortName]['pnames']):
+                            metaDict['methods'][methShortName]['pnames'] = [ str(name, 'utf-8') for name in pnames]
                     else:    
-                        metaDict['methods'][methShortName]={ 'class': className, 'type':0, 'name': methShortName, 'rec':[ methName, methType, meth.typeName() ] }
+                        metaDict['methods'][methShortName]={ 'doc':'', 'class': className, 'type':0, 'name': methShortName, 'pnames': [ str(name, 'utf-8') for name in pnames], 'rec':[ methName, methType, meth.typeName() ] }
                     #>>metaDict['methods'][methName]={ 'class': className, 'type':0, 'name': str(meth.name(), 'utf-8'), 'rec':[ methName, methType, meth.typeName() ] }
 
             return metaDict
@@ -558,7 +805,8 @@ class PluginDevToolsDocker(DockWidget):
             win = QtWidgets.qApp.activeWindow()
             if self.currentWindow is not win:
                 if win:
-                    self.selectorWidget.setVisible(False)
+                    if self.selectorWidget and not sip.isdeleted(self.selectorWidget):
+                        self.selectorWidget.setVisible(False)
                     wid = win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindDirectChildrenOnly)
                     if wid:
                         self.selectorWidget = wid
@@ -850,7 +1098,7 @@ class PluginDevToolsDocker(DockWidget):
             indexes = self.treeView.selectionModel().selectedIndexes()
                        
             if indexes:
-                self.treeView.expand(self.proxyTreeModel.mapFromSource( indexes[0] ))
+                self.treeView.expand(indexes[0])
                 self.treeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
                 self.treeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
 
@@ -1090,7 +1338,4 @@ class PluginDevToolsDocker(DockWidget):
         def hasMethod(self, obj, method):
             return True if hasattr(obj, method) and callable(getattr(obj, method)) else False
 
-
-
-Krita.instance().addDockWidgetFactory(DockWidgetFactory("pluginDevToolsDocker", DockWidgetFactoryBase.DockBottom, PluginDevToolsDocker)) 
- 
+Krita.instance().addDockWidgetFactory(DockWidgetFactory("pluginDevToolsDocker", DockWidgetFactoryBase.DockBottom, PluginDevToolsDocker))

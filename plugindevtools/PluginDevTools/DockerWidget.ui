@@ -361,6 +361,16 @@
           </widget>
          </item>
          <item>
+          <widget class="QToolButton" name="kritaapiGenAutoComplete">
+           <property name="toolTip">
+            <string>Export API AutoComplete</string>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QComboBox" name="kritaapiVersionCmb">
            <item>
             <property name="text">
@@ -369,13 +379,29 @@
            </item>
           </widget>
          </item>
+         <item>
+          <widget class="QToolButton" name="kritaapiDownload">
+           <property name="toolTip">
+            <string>Download API from KDE git</string>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
-        <widget class="QTreeView" name="kritaapiTreeView">
-         <attribute name="headerDefaultSectionSize">
-          <number>350</number>
-         </attribute>
+        <widget class="QSplitter" name="splitter">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <widget class="QTreeView" name="kritaapiTreeView">
+          <attribute name="headerDefaultSectionSize">
+           <number>350</number>
+          </attribute>
+         </widget>
+         <widget class="QTextBrowser" name="kritaapiTextBrowser"/>
         </widget>
        </item>
       </layout>
