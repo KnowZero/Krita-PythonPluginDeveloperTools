@@ -1083,6 +1083,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
             self.caller = caller
             
             self.currentWidget = None
+            self.currentTableItem = None
             
             self.treeView = caller.centralWidget.inspectorTreeView
             self.tableView = caller.centralWidget.inspectorTableView
@@ -1131,7 +1132,11 @@ Would you like to download the API details(less than 200kb of data) automaticall
             self.caller.centralWidget.inspectorSelectorBtn.toggled.connect(self.showCurrentWidget)
             #self.caller.centralWidget.inspectorSelectorBtn.released.connect(self.hideCurrentWidget)
             
-
+            self.caller.centralWidget.inspectorUpdateLayoutWidget.setVisible(False)
+            self.tableView.doubleClicked.connect(self.showUpdateLayout)
+            
+            self.caller.centralWidget.inspectorUpdateBtn.pressed.connect(self.commitUpdateLayout)
+            self.caller.centralWidget.inspectorUpdateCancelBtn.pressed.connect(self.hideUpdateLayout)
                     
             self.caller.centralWidget.inspectorFilter.textChanged.connect(self.searchTreeFilter)
             self.firstRun = False
@@ -1146,6 +1151,67 @@ Would you like to download the API details(less than 200kb of data) automaticall
         def unselected(self):
             if self.showCurrentWidgetHighlight:
                 self.caller.centralWidget.inspectorSelectorBtn.setChecked(False)
+        
+        def showUpdateLayout(self, rec):
+            self.currentTableItem = rec
+            prop = self.proxyTableModel.index( rec.row(), 0 ).data()
+            print ("DC", rec.column(), rec.row(), prop, "set"+prop[0].capitalize() + prop[1:], hasattr( self.currentWidget, "set"+prop[0].capitalize() + prop[1:] ) )
+            if rec.column() == 2:
+                if hasattr( self.currentWidget, "set"+prop[0].capitalize() + prop[1:] ):
+                    self.caller.centralWidget.inspectorUpdateTextEdit.setPlainText( str(self.currentWidget.property(prop)) )
+                    self.caller.centralWidget.inspectorUpdateLayoutWidget.setVisible(True)
+
+        def hideUpdateLayout(self):
+            self.caller.centralWidget.inspectorUpdateLayoutWidget.setVisible(False)
+
+        def commitUpdateLayout(self):
+
+            rec = self.currentTableItem
+            prop = str(self.proxyTableModel.index( rec.row(), 0 ).data())
+            
+            attrName = "set" + prop[0].capitalize() + prop[1:]
+            
+            attrValue = self.caller.centralWidget.inspectorUpdateTextEdit.toPlainText()
+            
+            attrType = type(self.currentWidget.property(prop)).__name__
+            
+
+            
+            if attrType == 'bool':
+                attrValue = True if attrValue.capitalize() == 'True' or attrValue == '1' or attrValue == 't' else False
+            elif attrType == 'int':
+                attrValue = int(attrValue)
+            elif attrType == 'float':
+                attrValue = float(attrValue)
+            elif attrType == 'QRect':
+                params = tuple( map(int, (attrValue.split('QRect('))[1].replace(")","").split(",") ) )
+                attrValue = QRect(*params)
+            elif attrType == 'QRectF':
+                params = tuple( map(float, (attrValue.split('QRectF('))[1].replace(")","").split(",") ) )
+                attrValue = QRect(*params)
+            elif attrType == 'QPoint':
+                params = tuple( map(int, (attrValue.split('QPoint('))[1].replace(")","").split(",") ) )
+                attrValue = QPoint(*params)
+            elif attrType == 'QPointF':
+                params = tuple( map(float, (attrValue.split('QPointF('))[1].replace(")","").split(",") ) )
+                attrValue = QPointF(*params)
+            elif attrType == 'QSize':
+                params = tuple( map(int, (attrValue.split('QSize('))[1].replace(")","").split(",") ) )
+                attrValue = QPoint(*params)
+            elif attrType == 'QSizeF':
+                params = tuple( map(float, (attrValue.split('QSizeF('))[1].replace(")","").split(",") ) )
+                attrValue = QPointF(*params)
+
+
+            if hasattr(self.currentWidget,attrName):
+                getattr(self.currentWidget,attrName)( attrValue )
+                self.proxyTableModel.setData(self.proxyTableModel.index( rec.row(), 2 ), pprint.pformat(attrValue) )
+            else:
+                attrName = "to" + prop[0].capitalize() + prop[1:]
+                if hasattr(self.currentWidget,attrName):
+                    getattr(self.currentWidget,attrName)( attrValue )
+                    self.proxyTableModel.setData(self.proxyTableModel.index( rec.row(), 2 ), pprint.pformat(attrValue) )
+
         
         def showCurrentWidget(self, toggle):
             if toggle:
@@ -1314,6 +1380,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 self.loadItemInfo( indexes[0].data(101) )
         
         def loadItemInfo(self, obj):
+            self.hideUpdateLayout()
             if sip.isdeleted(obj): return
         
             self.currentWidget = obj

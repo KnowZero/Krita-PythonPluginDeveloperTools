@@ -260,6 +260,44 @@
              </attribute>
             </widget>
            </item>
+           <item>
+            <widget class="QWidget" name="inspectorUpdateLayoutWidget" native="true">
+             <layout class="QGridLayout" name="gridLayout">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item row="0" column="0" rowspan="3">
+               <widget class="QTextEdit" name="inspectorUpdateTextEdit"/>
+              </item>
+              <item row="0" column="1">
+               <widget class="QToolButton" name="inspectorUpdateBtn">
+                <property name="text">
+                 <string>Update</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QToolButton" name="inspectorUpdateCancelBtn">
+                <property name="text">
+                 <string>Hide</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
           </layout>
          </widget>
         </widget>
