@@ -1028,7 +1028,14 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     obj.update()
                 
                 rect = obj.geometry()
-                pos = obj.mapTo(self.currentWindow, QPoint(0,0) )
+                
+                if obj.metaObject().superClass().className() == 'QLayout' or obj.metaObject().superClass().className() == 'QBoxLayout':
+                    layoutItem = obj.itemAt(0)
+                    if layoutItem is None or layoutItem.widget() is None:
+                        return
+                    pos = layoutItem.widget().mapTo(self.currentWindow, QPoint(0,0) )
+                else:
+                    pos = obj.mapTo(self.currentWindow, QPoint(0,0) )
                 rect.moveTo(pos)
                 
                 self.selectorWidget.setGeometry( rect )
@@ -1119,8 +1126,10 @@ Would you like to download the API details(less than 200kb of data) automaticall
             
             self.caller.centralWidget.inspectorRefreshBtn.clicked.connect(self.refreshItems)
             
-            self.caller.centralWidget.inspectorSelectorBtn.pressed.connect(self.showCurrentWidget)
-            self.caller.centralWidget.inspectorSelectorBtn.released.connect(self.hideCurrentWidget)
+            self.showCurrentWidgetHighlight = False
+            
+            self.caller.centralWidget.inspectorSelectorBtn.toggled.connect(self.showCurrentWidget)
+            #self.caller.centralWidget.inspectorSelectorBtn.released.connect(self.hideCurrentWidget)
             
 
                     
@@ -1135,17 +1144,19 @@ Would you like to download the API details(less than 200kb of data) automaticall
                         self.loadTreeItems(win, 0, 'topLevelWidgets')
         
         def unselected(self):
-            pass
+            if self.showCurrentWidgetHighlight:
+                self.caller.centralWidget.inspectorSelectorBtn.setChecked(False)
         
-        def showCurrentWidget(self):
-            #print ("show current!", self.currentWidget)
-            self.caller.t['selector'].currentWindow = win = QtWidgets.qApp.activeWindow()
-            self.caller.t['selector'].selectorWidget=win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindDirectChildrenOnly)
-            self.caller.t['selector'].setCurrentSelector(self.currentWidget, False)
+        def showCurrentWidget(self, toggle):
+            if toggle:
+                self.showCurrentWidgetHighlight = True
+                self.caller.t['selector'].currentWindow = win = QtWidgets.qApp.activeWindow()
+                self.caller.t['selector'].selectorWidget=win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindDirectChildrenOnly)
+                self.caller.t['selector'].setCurrentSelector(self.currentWidget, False)
+            else:
+                self.showCurrentWidgetHighlight = False
+                self.caller.t['selector'].stopSampling(False)
             
-            
-        def hideCurrentWidget(self):
-            self.caller.t['selector'].stopSampling(False)
         
         def refreshItems(self, currentItem = None):
             self.caller.centralWidget.inspectorFilter.setText("")
@@ -1306,6 +1317,9 @@ Would you like to download the API details(less than 200kb of data) automaticall
             if sip.isdeleted(obj): return
         
             self.currentWidget = obj
+            
+            if self.showCurrentWidgetHighlight:
+                self.caller.t['selector'].setCurrentSelector(self.currentWidget, False)
         
             self.tableModel.clear()
             self.tableModel.setHorizontalHeaderLabels(['Name', "Type", 'Value'])

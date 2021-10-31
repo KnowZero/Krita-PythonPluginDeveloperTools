@@ -225,7 +225,7 @@
              <item>
               <widget class="QToolButton" name="inspectorSelectorBtn">
                <property name="toolTip">
-                <string>Hold to Highlight Widget Position</string>
+                <string>Highlight Widget Position</string>
                </property>
                <property name="text">
                 <string>...</string>
@@ -233,6 +233,9 @@
                <property name="icon">
                 <iconset theme="pointer">
                  <normaloff>../../../../../.designer/backup</normaloff>../../../../../.designer/backup</iconset>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
                </property>
               </widget>
              </item>
