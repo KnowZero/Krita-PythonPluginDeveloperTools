@@ -19,18 +19,23 @@ class PluginDevToolsDocker(DockWidget):
         
         settingsData = Krita.instance().readSetting("", "pluginDevToolsSettings","")
         
+        self.settings = {}
         if settingsData.startswith('{'):
             self.settings = json.loads(settingsData)
-        else:
-            self.settings = {
-                'kritaapi':{}
-            }
+        
+        
         
         self.kritaAPI = {}
         
         self.setWindowTitle("Plugin Developer Tools")
        
         self.centralWidget = uic.loadUi(os.path.dirname(os.path.realpath(__file__)) + '/DockerWidget.ui')
+        
+        for i in range(0,self.centralWidget.tabWidget.count()):
+            name = self.centralWidget.tabWidget.widget(i).objectName().replace('Tab','')
+            if name not in self.settings:
+                self.settings[name] = {}
+        
         
         self.setWidget(self.centralWidget)
         self.firstRun = True
@@ -509,9 +514,20 @@ Would you like to download the API details(less than 200kb of data) automaticall
             return metaDict
 
     class PluginDevToolsConsole():
+        EXECUTE_KEYS = [
+            ['Enter', Qt.Key_Return, Qt.NoModifier ],
+            ['Shift + Enter', Qt.Key_Return, Qt.ShiftModifier ],
+            ['Ctrl + E', Qt.Key_E, Qt.ControlModifier ],
+            ['Ctrl + F5', Qt.Key_F5, Qt.ControlModifier ],
+        ]
+        
         def __init__(self, caller):
             super().__init__()
             self.caller = caller
+            
+            self.tempFilePath = os.path.dirname(os.path.realpath(__file__)) + ".console.temp.py"
+            self.watcher = None
+            self.currentExecuteKey = self.EXECUTE_KEYS[0]
             
             self.historyTreeView = self.caller.centralWidget.consoleOutputBrowser
             self.historyModel = QStandardItemModel()
@@ -523,10 +539,44 @@ Would you like to download the API details(less than 200kb of data) automaticall
             
             self.textEdit = self.caller.centralWidget.consoleInputTextEdit
             
+            self.caller.centralWidget.consoleClearBtn.setIcon( Krita.instance().icon('list-remove') )
+            #self.caller.centralWidget.consoleDefaultExecuteBtn.setIcon( Krita.instance().icon('config-keyboard') )
             
+            self.caller.centralWidget.consoleTempScriptFileBtn.setIcon( Krita.instance().icon('edit-rename') )
+            self.caller.centralWidget.consoleSetScriptFileBtn.setIcon( Krita.instance().icon('document-open') )
+            
+            self.caller.centralWidget.boolConsoleBindSTDOUT.setVisible(False)
             
             self.textEditFilter = self.textEditFilterClass(self)
             self.textEdit.installEventFilter(self.textEditFilter)
+            
+            self.caller.centralWidget.consoleClearBtn.clicked.connect(self.clearConsole)
+            
+            self.caller.centralWidget.consoleTempScriptFileBtn.toggled.connect(self.tempScriptFile)
+            self.caller.centralWidget.consoleSetScriptFileBtn.toggled.connect(self.setScriptFile)
+            
+            for key in self.EXECUTE_KEYS:
+                self.caller.centralWidget.consoleDefaultExecuteCmb.addItem( key[0], key[1] )
+                
+            self.caller.centralWidget.consoleDefaultExecuteCmb.currentIndexChanged.connect(self.executeKeyChanged)
+
+            self.caller.centralWidget.consoleDefaultExecuteCmb.setCurrentIndex( 
+                caller.settings['console']['execute_key'] if 'execute_key' in caller.settings['console'] else 0
+            )
+            
+            self.caller.centralWidget.consoleAutoExecuteModeCmb.currentIndexChanged.connect(self.slotAutoExecuteModeChanged)
+
+            self.caller.centralWidget.consoleAutoExecuteModeCmb.setCurrentIndex( 
+                caller.settings['console']['auto_execute_mode'] if 'auto_execute_mode' in caller.settings['console'] else 0
+            )
+            
+            self.caller.centralWidget.consoleFilter.textChanged.connect(self.searchTreeFilter)
+            
+            if 'watch_file' in caller.settings['console']:
+                if caller.settings['console']['watch_file'] == self.tempFilePath:
+                    self.caller.centralWidget.consoleTempScriptFileBtn.setChecked(True)
+                else:
+                    self.caller.centralWidget.consoleSetScriptFileBtn.setChecked(True)
             
             self.firstRun = True
 
@@ -534,15 +584,105 @@ Would you like to download the API details(less than 200kb of data) automaticall
             if not self.firstRun:
                 self.firstRun = True
                 
-                
-                
+   
         
         def unselected(self):
             pass
         
+        def executeKeyChanged(self, i):
+            self.currentExecuteKey = self.EXECUTE_KEYS[i]
+            self.caller.settings['console']['execute_key']=i
+            Krita.instance().writeSetting("", "pluginDevToolsSettings", json.dumps(self.caller.settings) )
         
-        def executeCode(self):
-            script = self.textEdit.toPlainText()
+        def clearConsole(self):
+            self.historyModel.clear()
+            
+        def tempScriptFile(self, toggle):
+            tbtn = self.caller.centralWidget.consoleTempScriptFileBtn
+            sbtn = self.caller.centralWidget.consoleSetScriptFileBtn
+            
+            if toggle:
+                if sbtn.isChecked():
+                    self.setScriptFile(False)
+                
+                tempFile = QUrl.fromLocalFile( self.tempFilePath )
+            
+                if not os.path.exists( tempFile.toLocalFile() ):
+                    f = open(tempFile.toLocalFile(),'w+')
+                    f.write("# Script Name: Temp File Script\n\n")
+                    f.close()
+            
+                QDesktopServices.openUrl( tempFile )
+                if self.watchFile(tempFile.toLocalFile()):
+                    tbtn.setChecked(True)
+            else:
+                self.unwatchFile()
+                tbtn.setChecked(False)
+
+
+        def setScriptFile(self, toggle):
+            tbtn = self.caller.centralWidget.consoleTempScriptFileBtn
+            sbtn = self.caller.centralWidget.consoleSetScriptFileBtn
+            
+            
+            if toggle:
+                if tbtn.isChecked():
+                    self.tempScriptFile(False)
+                
+                filename, _ = QFileDialog.getOpenFileName(
+                    caption="Open script python file...", filter="Python files (*.py)"
+                )
+                if filename:
+
+                    QDesktopServices.openUrl( QUrl.fromLocalFile(filename) )
+                    if self.watchFile(filename):
+                        sbtn.setChecked(True)
+            else:
+                self.unwatchFile()
+                sbtn.setChecked(False)
+        
+        def unwatchFile(self, inputFile = None):
+            if self.watcher:
+                if inputFile is None:
+                    inputFile = self.caller.settings['console']['watch_file']
+                    del self.caller.settings['console']['watch_file']
+                    Krita.instance().writeSetting("", "pluginDevToolsSettings", json.dumps(self.caller.settings) )
+                    
+                self.watcher.fileChanged.disconnect(self.slotFileChanged)
+                self.watcher.removePath(inputFile)
+                self.watcher = None
+            
+        
+        def watchFile(self, inputFile):
+            if self.watcher is None:
+                self.watcher = QFileSystemWatcher()
+                self.watcher.fileChanged.connect(self.slotFileChanged)
+                
+            if self.watcher.addPath(inputFile):
+                self.caller.settings['console']['watch_file']=inputFile
+                Krita.instance().writeSetting("", "pluginDevToolsSettings", json.dumps(self.caller.settings) )
+                return True
+            else:        
+                return False
+        
+        
+        def slotFileChanged(self):
+            f = open(self.caller.settings['console']['watch_file'], "r")
+            fdata = f.read()
+            
+            if 'auto_execute_mode' not in self.caller.settings['console'] or self.caller.settings['console']['auto_execute_mode'] == 0:
+                self.executeCode(fdata)
+            else:
+                self.textEdit.setPlainText(fdata)
+            
+        
+        def slotAutoExecuteModeChanged(self, i):
+            self.caller.settings['console']['auto_execute_mode'] = i
+            Krita.instance().writeSetting("", "pluginDevToolsSettings", json.dumps(self.caller.settings) )
+        
+        def executeCode(self, script = None):
+            if not script:
+                script = self.textEdit.toPlainText()
             rootItem = QStandardItem( script )
             self.historyModel.appendRow( rootItem )
             
@@ -590,6 +730,11 @@ Would you like to download the API details(less than 200kb of data) automaticall
             
             self.textEdit.setPlainText("")
 
+
+        def searchTreeFilter(self, text):
+            self.proxyModel.setFilterRole(Qt.DisplayRole)
+            self.proxyModel.setFilterFixedString(text)
+
         class textEditFilterClass(QWidget):
             def __init__(self, caller, parent=None):
                 super().__init__()
@@ -597,7 +742,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
             
             def eventFilter(self, obj, event):
                 etype = event.type()
-                if etype == 6 and event.key() == Qt.Key_Return and QApplication.keyboardModifiers() != Qt.ShiftModifier:
+                if etype == 6 and event.key() == self.caller.currentExecuteKey[1] and QApplication.keyboardModifiers() == self.caller.currentExecuteKey[2]:
                     self.caller.executeCode()
                     #print ("ENTER!")
                     return True
@@ -753,13 +898,27 @@ Would you like to download the API details(less than 200kb of data) automaticall
             #print ( "REC!", self.tableModel.index( rec.row(), 0 ).data() )
 
     class PluginDevToolsSelector():
+        KEY_MODS = [
+            [Qt.ShiftModifier, Qt.Key_Shift],
+            [Qt.ControlModifier, Qt.Key_Control],
+            [Qt.AltModifier, Qt.Key_Alt],
+            [Qt.MetaModifier, Qt.Key_Meta],
+            ]
         def __init__(self, caller):
             super().__init__()
             self.caller = caller
             
+            self.modKey = self.KEY_MODS[0]
+            
             self.windowFilter = self.windowFilterClass(self)
             
             self.selectorOutput = caller.centralWidget.selectorOutputLabel
+            caller.centralWidget.selectorKeyCmb.currentIndexChanged.connect(self.changeSelectorModifier)
+            
+            caller.centralWidget.selectorKeyCmb.setCurrentIndex( 
+                caller.settings['selector']['modkey'] if 'modkey' in caller.settings['selector'] else 0
+            )
+            
             
             self.currentWidget = None
             self.currentWindow = None
@@ -771,6 +930,11 @@ Would you like to download the API details(less than 200kb of data) automaticall
             
             #self.caller.qwin.setStyleSheet( self.caller.qwin.styleSheet() + '*[DevToolsHoverWithSelector="true"] { background-color: rgba(0, 0, 155, 50); border: 1px solid #000080; }' )
             self.createSelector(self.caller.qwin)
+            
+        def changeSelectorModifier(self, i):
+            self.caller.settings['selector']['modkey'] = i
+            Krita.instance().writeSetting("", "pluginDevToolsSettings", json.dumps(self.caller.settings) )
+            self.modKey = self.KEY_MODS[i]
             
         def createSelector(self, window):
             #print ("create selector!")
@@ -833,6 +997,9 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 if localCall:
                     self.caller.centralWidget.selectorOutputLabel.setText("None")
                     self.caller.t['inspector'].loadItemInfo(self.currentWidget)
+                    self.caller.t['inspector'].firstRun = True
+                    self.caller.t['inspector'].refreshItems(self.currentWidget)
+                    #self.caller.t['inspector'].selectItemByRef(self.currentWidget)
                 self.currentWidget = None
                 
         def finishedSampling(self):
@@ -872,7 +1039,9 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 self.currentWidget = obj
                 if localCall: self.caller.centralWidget.selectorOutputLabel.setText("[" + type(obj).__name__ + "] " + obj.objectName())
             
-            
+        
+
+        
         class windowFilterClass(QWidget):
             def __init__(self, caller, parent=None):
                 super().__init__()
@@ -881,16 +1050,16 @@ Would you like to download the API details(less than 200kb of data) automaticall
             def eventFilter(self, obj, event):
                 etype = event.type()
                 
-                if etype == 129 or (etype == 6 and event.key() == Qt.Key_Shift):
-                    if etype == 6 and event.key() == Qt.Key_Shift:
+                if etype == 129 or (etype == 6 and event.key() == self.caller.modKey[1]):
+                    if etype == 6 and event.key() == self.caller.modKey[1]:
                         win = QtWidgets.qApp.activeWindow()
                         self.caller.selectorWidget=win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindDirectChildrenOnly)
                     
-                    if QApplication.keyboardModifiers() == Qt.ShiftModifier:
+                    if QApplication.keyboardModifiers() == self.caller.modKey[0]:
                         pos = QCursor.pos()
                         onWidget = QApplication.widgetAt(pos)
                         self.caller.setCurrentSelector(onWidget)
-                elif etype == 7 and event.key() == Qt.Key_Shift and self.caller.currentWidget:
+                elif etype == 7 and event.key() == self.caller.modKey[1] and self.caller.currentWidget:
                         self.caller.finishedSampling()
                        
 
@@ -978,16 +1147,22 @@ Would you like to download the API details(less than 200kb of data) automaticall
         def hideCurrentWidget(self):
             self.caller.t['selector'].stopSampling(False)
         
-        def refreshItems(self):
+        def refreshItems(self, currentItem = None):
             self.caller.centralWidget.inspectorFilter.setText("")
             self.treeModel.clear()
             self.treeModel.setHorizontalHeaderLabels(['Class', 'Name', 'Meta Class', 'From', 'Text/Value'])
             
             for win in QApplication.instance().topLevelWidgets():
                 if isinstance(win, QMainWindow):
-                    self.loadTreeItems(win, 0, 'topLevelWidgets')
+                    self.loadTreeItems(win, 0, 'topLevelWidgets', None, currentItem)
             if self.currentWidget:
                 self.loadItemInfo( self.currentWidget )
+                indexes = self.treeView.selectionModel().selectedIndexes()
+                       
+                if indexes:
+                    self.treeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
+
+                
         
         def getObjDocs(self):
             if self.currentWidget:
@@ -1086,6 +1261,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     self.loadItemInfo( parent )
         
         def searchTreeFilter(self, text):
+            self.proxyTreeModel.setFilterRole(Qt.DisplayRole)
             if len(text) >= 3:
                 self.proxyTreeModel.setFilterFixedString(text)
                 self.treeView.expandAll()
@@ -1104,9 +1280,20 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
         
         def selectItemByRef(self, obj):
-            idx = self.treeModel.match( self.treeModel.index(0,0) , 101, obj, 1, Qt.MatchRecursive )
-            if idx:
-                print ( idx[0].row() )
+            pass
+            #self.proxyTreeModel.setFilterRole(102)
+            #self.proxyTreeModel.setFilterFixedString( str(id(obj)) )
+            #self.proxyTreeModel.setFilterFixedString( "" )
+            #indexes = self.proxyTreeModel.match( self.proxyTreeModel.index(0,0) , 102, hex(id(obj)), 1, Qt.MatchRecursive )
+            #print ("MATCH", indexes)
+            #if indexes:
+            #    #self.treeSelectModel.select( indexes[0], self.treeSelectModel.Select | self.treeSelectModel.Rows )
+            #    self.treeView.expand(indexes[0])
+            #    self.treeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
+            #    self.treeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
+            #idx = self.treeModel.match( self.treeModel.index(0,0) , 101, obj, 1, Qt.MatchRecursive )
+            #if idx:
+            #    print ( idx[0].row() )
             
                 #>>self.treeSelectModel.select(idx[0], self.treeSelectModel.Select | self.treeSelectModel.Rows )
         
@@ -1258,7 +1445,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
             
             return objectHeader
             
-        def loadTreeItems(self, pObj, depth, objType, parentItem = None):
+        def loadTreeItems(self, pObj, depth, objType, parentItem = None, currentItem = None):
             #if objType == 'viewport' and pObj: print ("VIEWPORT!!", pObj.children())
             if parentItem is None:
                 parentItem = self.treeModel.invisibleRootItem()
@@ -1270,10 +1457,31 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     self.selectItemByRef(pObj)
                     #self.treeSelectModel.select(idx, self.treeSelectModel.Select | self.treeSelectModel.Rows )
                     #self.loadItemInfo(pObj)
+                    
+
+
 
                 
                 objType = 'children'
                 depth = depth + 1
+            
+            
+            if currentItem and pObj is currentItem:
+                idx = parentItem.index()
+                self.treeSelectModel.select( self.proxyTreeModel.mapFromSource(idx) , self.treeSelectModel.Select | self.treeSelectModel.Rows )
+                self.treeView.expand(idx)
+                #print ("TREE", idx, parentItem.text() )
+                
+                onItem = parentItem
+                for i in range(0,depth-1):
+                    onItem = onItem.parent()
+                    idx = onItem.index()
+                    self.treeView.expand( self.proxyTreeModel.mapFromSource(idx) )
+                    #print ("TREE=", i, idx.row(), onItem.text() )
+                
+                
+                
+                
             
             for cObj in pObj.children():
                 cObjType = objType
@@ -1288,7 +1496,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 if self.hasMethod(cObj,'children') and type(cObj).__name__ != 'PluginDevToolsDocker':
                     #print ("CH", cObj.children())
                     
-                    self.loadTreeItems(cObj, depth + 1, 'children', item)
+                    self.loadTreeItems(cObj, depth + 1, 'children', item, currentItem)
                     
         def setItem(self, obj, parentItem, depth, objType):
             text = self.getText(obj)
