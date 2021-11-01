@@ -1027,18 +1027,20 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     obj.setStyleSheet(obj.styleSheet() + self.useStyleSheet)
                     obj.update()
                 
-                rect = obj.geometry()
                 
-                if obj.metaObject().superClass().className() == 'QLayout' or obj.metaObject().superClass().className() == 'QBoxLayout':
-                    layoutItem = obj.itemAt(0)
-                    if layoutItem is None or layoutItem.widget() is None:
-                        return
-                    pos = layoutItem.widget().mapTo(self.currentWindow, QPoint(0,0) )
-                else:
-                    pos = obj.mapTo(self.currentWindow, QPoint(0,0) )
-                rect.moveTo(pos)
                 
-                self.selectorWidget.setGeometry( rect )
+                if hasattr(obj, 'geometry'):
+                    rect = obj.geometry()
+                    if obj.metaObject().superClass().className() == 'QLayout' or obj.metaObject().superClass().className() == 'QBoxLayout':
+                        layoutItem = obj.itemAt(0)
+                        if layoutItem is None or layoutItem.widget() is None:
+                            return
+                        pos = layoutItem.widget().mapTo(self.currentWindow, QPoint(0,0) )
+                    else:
+                        pos = obj.mapTo(self.currentWindow, QPoint(0,0) )
+                    rect.moveTo(pos)
+                    
+                    self.selectorWidget.setGeometry( rect )
                 #obj.mapToGlobal(widgetRect.topLeft())
                 
                 
