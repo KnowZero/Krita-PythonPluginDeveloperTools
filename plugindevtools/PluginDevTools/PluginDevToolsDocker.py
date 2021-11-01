@@ -1149,10 +1149,12 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 for win in QApplication.instance().topLevelWidgets():
                     if isinstance(win, QMainWindow):
                         self.loadTreeItems(win, 0, 'topLevelWidgets')
+            if self.showCurrentWidgetHighlight:
+                self.showCurrentWidget(True)
         
         def unselected(self):
             if self.showCurrentWidgetHighlight:
-                self.caller.centralWidget.inspectorSelectorBtn.setChecked(False)
+                self.showCurrentWidget(False, True)
         
         def showUpdateLayout(self, rec):
             self.currentTableItem = rec
@@ -1215,14 +1217,15 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     self.proxyTableModel.setData(self.proxyTableModel.index( rec.row(), 2 ), pprint.pformat(attrValue) )
 
         
-        def showCurrentWidget(self, toggle):
+        def showCurrentWidget(self, toggle, switchTab = False):
             if toggle:
                 self.showCurrentWidgetHighlight = True
                 self.caller.t['selector'].currentWindow = win = QtWidgets.qApp.activeWindow()
                 self.caller.t['selector'].selectorWidget=win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindDirectChildrenOnly)
                 self.caller.t['selector'].setCurrentSelector(self.currentWidget, False)
             else:
-                self.showCurrentWidgetHighlight = False
+                if switchTab is False:
+                    self.showCurrentWidgetHighlight = False
                 self.caller.t['selector'].stopSampling(False)
             
         
