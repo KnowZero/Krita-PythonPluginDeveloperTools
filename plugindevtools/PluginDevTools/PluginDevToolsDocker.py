@@ -1016,7 +1016,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 parent = obj.parent()
                 
         def setCurrentSelector(self, obj, localCall = True):
-            if obj and obj is not self.currentWidget and self.findAncestor(self.currentWindow,obj):
+            if obj and not sip.isdeleted(obj) and obj is not self.currentWidget and self.findAncestor(self.currentWindow,obj):
                 self.selectorWidget.setVisible(True)
 
                 if self.useStyleSheet:
@@ -1086,6 +1086,8 @@ Would you like to download the API details(less than 200kb of data) automaticall
             
             self.currentWidget = None
             self.currentTableItem = None
+            
+            self.treeObjList = []
             
             self.treeView = caller.centralWidget.inspectorTreeView
             self.tableView = caller.centralWidget.inspectorTableView
@@ -1157,6 +1159,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 self.showCurrentWidget(False, True)
         
         def showUpdateLayout(self, rec):
+            if sip.isdeleted(self.currentWidget): return
             self.currentTableItem = rec
             prop = self.proxyTableModel.index( rec.row(), 0 ).data()
             print ("DC", rec.column(), rec.row(), prop, "set"+prop[0].capitalize() + prop[1:], hasattr( self.currentWidget, "set"+prop[0].capitalize() + prop[1:] ) )
@@ -1230,6 +1233,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
             
         
         def refreshItems(self, currentItem = None):
+            self.treeObjList = []
             self.caller.centralWidget.inspectorFilter.setText("")
             self.treeModel.clear()
             self.treeModel.setHorizontalHeaderLabels(['Class', 'Name', 'Meta Class', 'From', 'Text/Value'])
@@ -1382,7 +1386,12 @@ Would you like to download the API details(less than 200kb of data) automaticall
         def itemSelectionChanged(self, new, old):
             indexes = new.indexes()
             if indexes:
-                self.loadItemInfo( indexes[0].data(101) )
+                obj = self.treeObjList[indexes[0].data(101)]
+                if sip.isdeleted(obj):
+                    item = self.treeModel.itemFromIndex( self.proxyTreeModel.mapToSource(indexes[0]) )
+                    item.setIcon( Krita.instance().icon('window-close') )
+                else:
+                    self.loadItemInfo( obj )
         
         def loadItemInfo(self, obj):
             self.hideUpdateLayout()
@@ -1606,7 +1615,9 @@ Would you like to download the API details(less than 200kb of data) automaticall
             
             item = parentItem.child(parentItem.rowCount() - 1)
             
-            item.setData( obj, 101 )
+            
+            item.setData( len(self.treeObjList), 101 )
+            self.treeObjList.append(obj)
                 
             return item
                 
