@@ -1108,6 +1108,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
             
             self.tableModel = QStandardItemModel()
             self.proxyTableModel = QSortFilterProxyModel()
+            self.proxyTableModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
             self.tableModel.setHorizontalHeaderLabels(['Name', "Type", 'Value'])
 
             self.proxyTableModel.setSourceModel(self.tableModel)
@@ -1143,6 +1144,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
             self.caller.centralWidget.inspectorUpdateCancelBtn.pressed.connect(self.hideUpdateLayout)
                     
             self.caller.centralWidget.inspectorFilter.textChanged.connect(self.searchTreeFilter)
+            self.caller.centralWidget.inspectorTableFilter.textChanged.connect(self.searchTableFilter)
             self.firstRun = False
 
         def selected(self):
@@ -1364,6 +1366,9 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 self.treeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
                 self.treeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
 
+
+        def searchTableFilter(self, text):
+            self.proxyTableModel.setFilterFixedString(text)
         
         def selectItemByRef(self, obj):
             pass

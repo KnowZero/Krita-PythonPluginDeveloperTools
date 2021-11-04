@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>814</width>
-    <height>278</height>
+    <height>279</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,7 +22,7 @@
      <widget class="QWidget" name="selectorTab">
       <attribute name="icon">
        <iconset theme="pointer">
-        <normaloff>../../../../../../../../.designer/backup</normaloff>../../../../../../../../.designer/backup</iconset>
+        <normaloff>../../../../../../../../../../../.designer/backup</normaloff>../../../../../../../../../../../.designer/backup</iconset>
       </attribute>
       <attribute name="title">
        <string/>
@@ -166,7 +166,7 @@
                </property>
                <property name="icon">
                 <iconset theme="view-refresh">
-                 <normaloff>../../../../../.designer/backup</normaloff>../../../../../.designer/backup</iconset>
+                 <normaloff>../../../../../../../../.designer/backup</normaloff>../../../../../../../../.designer/backup</iconset>
                </property>
               </widget>
              </item>
@@ -180,7 +180,7 @@
                </property>
                <property name="icon">
                 <iconset theme="arrow-up">
-                 <normaloff>../../../../../.designer/backup</normaloff>../../../../../.designer/backup</iconset>
+                 <normaloff>../../../../../../../../.designer/backup</normaloff>../../../../../../../../.designer/backup</iconset>
                </property>
               </widget>
              </item>
@@ -194,7 +194,7 @@
                </property>
                <property name="icon">
                 <iconset theme="document-print-preview">
-                 <normaloff>../../../../../.designer/backup</normaloff>../../../../../.designer/backup</iconset>
+                 <normaloff>../../../../../../../../.designer/backup</normaloff>../../../../../../../../.designer/backup</iconset>
                </property>
               </widget>
              </item>
@@ -208,7 +208,7 @@
                </property>
                <property name="icon">
                 <iconset theme="system-help">
-                 <normaloff>../../../../../.designer/backup</normaloff>../../../../../.designer/backup</iconset>
+                 <normaloff>../../../../../../../../.designer/backup</normaloff>../../../../../../../../.designer/backup</iconset>
                </property>
               </widget>
              </item>
@@ -232,9 +232,19 @@
                </property>
                <property name="icon">
                 <iconset theme="pointer">
-                 <normaloff>../../../../../.designer/backup</normaloff>../../../../../.designer/backup</iconset>
+                 <normaloff>../../../../../../../../.designer/backup</normaloff>../../../../../../../../.designer/backup</iconset>
                </property>
                <property name="checkable">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="inspectorTableFilter">
+               <property name="placeholderText">
+                <string>Filter...</string>
+               </property>
+               <property name="clearButtonEnabled">
                 <bool>true</bool>
                </property>
               </widget>
@@ -336,6 +346,9 @@
               <widget class="QLineEdit" name="consoleFilter">
                <property name="placeholderText">
                 <string>Filter...</string>
+               </property>
+               <property name="clearButtonEnabled">
+                <bool>true</bool>
                </property>
               </widget>
              </item>
@@ -517,6 +530,9 @@
           <widget class="QLineEdit" name="kritaapiFilter">
            <property name="placeholderText">
             <string>Filter...</string>
+           </property>
+           <property name="clearButtonEnabled">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
