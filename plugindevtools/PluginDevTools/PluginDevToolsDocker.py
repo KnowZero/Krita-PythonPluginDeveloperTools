@@ -981,6 +981,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 #print ("FOCUS CHANGED!", win, QApplication.activeModalWidget(), QApplication.activePopupWidget())
 
         def stopSampling(self, localCall = True):
+            currentWindow = self.currentWindow
             if self.currentWindow:
                 if localCall:
                     QtWidgets.qApp.focusChanged.disconnect(self.focusItem)
@@ -998,7 +999,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     self.caller.centralWidget.selectorOutputLabel.setText("None")
                     self.caller.t['inspector'].loadItemInfo(self.currentWidget)
                     self.caller.t['inspector'].firstRun = True
-                    self.caller.t['inspector'].refreshItems(self.currentWidget)
+                    self.caller.t['inspector'].refreshItems(self.currentWidget, currentWindow)
                     #self.caller.t['inspector'].selectItemByRef(self.currentWidget)
                 self.currentWidget = None
                 
@@ -1234,14 +1235,14 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 self.caller.t['selector'].stopSampling(False)
             
         
-        def refreshItems(self, currentItem = None):
+        def refreshItems(self, currentItem = None, currentWindow = None):
             self.treeObjList = []
             self.caller.centralWidget.inspectorFilter.setText("")
             self.treeModel.clear()
             self.treeModel.setHorizontalHeaderLabels(['Class', 'Name', 'Meta Class', 'From', 'Text/Value'])
-            
+
             for win in QApplication.instance().topLevelWidgets():
-                if isinstance(win, QMainWindow):
+                if isinstance(win, QMainWindow) or (currentWindow and win is currentWindow):
                     self.loadTreeItems(win, 0, 'topLevelWidgets', None, currentItem)
             if self.currentWidget:
                 self.loadItemInfo( self.currentWidget )
@@ -1343,7 +1344,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
             self.caller.centralWidget.tabWidget.setCurrentIndex(2)
         
         def getParent(self):
-            if self.currentWidget:
+            if self.currentWidget and not sip.isdeleted(self.currentWidget):
                 parent = self.currentWidget.parent()
                 if parent:
                     self.loadItemInfo( parent )
