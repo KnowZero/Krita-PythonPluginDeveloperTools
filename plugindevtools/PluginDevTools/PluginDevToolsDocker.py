@@ -1455,11 +1455,13 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 for i in range(meta.propertyOffset(), meta.propertyCount(), 1 ):
                     prop = meta.property(i)
                     propName = prop.name()
+
                     if propName not in metaDict['properties']:
+                        if propName == 'sizeHint' and obj.property('minimumSizeHint').isEmpty(): continue
                         propType = prop.typeName()
-                        propValue = pprint.pformat( obj.property(prop.name()) )
+                        propValue = pprint.pformat( obj.property(propName) )
                         className = None
-                        
+
                         if inheritsFrom:
                             propType = propType + " [from "+meta.className()+"]"
                             className = meta.className()
