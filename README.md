@@ -5,8 +5,10 @@ Python plugin for Krita that assists with making python plugins for Krita
 
 The goal of these tools is to make it easier for people to develop python plugins.
 
+## Install instructions:
+https://docs.krita.org/en/user_manual/python_scripting/install_custom_python_plugin.html
 
-Current features include:
+## Current features include:
 
 **Selector/Sampler** - for selecting with the mouse PyQt5 objects. Hold the shift key(or optionally ctrl/alt/meta key) and move the mouse as you wish, when you find the item you want, let go of the shift and it will show up in inspector.
 
