@@ -6,6 +6,9 @@ Python plugin for Krita that assists with making python plugins for Krita
 The goal of these tools is to make it easier for people to develop python plugins.
 
 ## Install instructions:
+
+Download by clicking Code on top and Download ZIP, then follow the instructions shown here:
+
 https://docs.krita.org/en/user_manual/python_scripting/install_custom_python_plugin.html
 
 ## Current features include:
