@@ -5,7 +5,6 @@ Python plugin for Krita that assists with making python plugins for Krita
 
 The goal of these tools is to make it easier for people to develop python plugins.
 
-![video](https://krita-artists.org/uploads/default/original/3X/d/a/dafcdbfd985501fcca8f91cb6cf7df05b98bbcce.webm)
 
 Current features include:
 
