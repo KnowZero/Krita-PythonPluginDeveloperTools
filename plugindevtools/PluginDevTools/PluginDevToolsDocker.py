@@ -1277,16 +1277,25 @@ Would you like to download the API details(less than 200kb of data) automaticall
             obj = self.currentWidget
             
             lastNamed = None
+            lastItem = None
             docker = None
+            statusbar = False
             mdi = False
             path = []
             
             while True:
                 path.append(obj)
                 
-                if obj.metaObject().className() == "QDockWidget":
-                    if obj.parent() and obj.parent().className() == "QMainWindow":
+                if type(obj).__name__ == "QDockWidget":
+                    if obj.parent() and type(obj.parent()).__name__ == "QMainWindow":
                         docker = obj.objectName()
+                        lastItem = obj
+                        
+                elif type(obj).__name__ == "QStatusBar":
+                    if obj.parent() and type(obj.parent()).__name__ == "QMainWindow":
+                        statusbar = True
+                        lastItem = obj
+                        
                 elif obj.metaObject().className() == "QMdiArea":
                     mdi = True
                 
@@ -1304,12 +1313,21 @@ Would you like to download the API details(less than 200kb of data) automaticall
             if docker:
                 codeBase = "from krita import *\n\nqdock = next((w for w in Krita.instance().dockers() if w.objectName() == '"+ docker +"'), None)\n"
                 onWidget = "qdock"
+                path.pop()
+
+                # this is slightly faster but adds too many lines for console
                 #codeBase = """qdock = None
                 #for widget in Krita.instance().dockers():
                 #    if widget.objectName() == '"""+ docker +"""':
                 #        qdock = widget
                 #        break
                 #"""
+            elif statusbar:
+                codeBase = "from krita import *\n\nqsbar = Krita.instance().activeWindow().qwindow().statusBar()\n"
+                onWidget = "qsbar"
+                path.pop()
+
+                
             else:
                 codeBase = "from krita import *\n\nqwin = Krita.instance().activeWindow().qwindow()\n"
                 onWidget = "qwin"
@@ -1318,27 +1336,44 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 
             
             if self.currentWidget.objectName():
-                codeBase += "obj = "+onWidget+".findChild("+ type(self.currentWidget).__name__ +",'"+ self.currentWidget.objectName() +"')\n"
+                codeBase += "wobj = "+onWidget+".findChild("+ type(self.currentWidget).__name__ +",'"+ self.currentWidget.objectName() +"')\n"
             elif path:
-                codeBase += "pobj = "+onWidget+".findChild("+ type(lastNamed).__name__ +",'"+ lastNamed.objectName() +"')\n"
-                onWidget = "pobj"
+                if type(lastNamed).__name__ != "QMainWindow" and (not docker or not lastNamed.objectName() == docker):
+                    codeBase += "pobj = "+onWidget+".findChild("+ type(lastNamed).__name__ +",'"+ lastNamed.objectName() +"')\n"
+                    onWidget = "pobj"
                 
                 backFill = False
-                
-                for item in path.reverse():
-                    if item is lastNamed:
-                        if len(lastNamed.findChildren(type(self.currentWidget).__name__)) == 1:
-                            codeBase += "obj = "+onWidget+".findChild("+ type(self.currentWidget).__name__ +")\n"
+
+                for item in reversed(path):
+                    if item is lastItem:
+                        if len(lastItem.findChildren(type(self.currentWidget))) == 1:
+                            codeBase += "wobj = "+onWidget+".findChild("+ type(self.currentWidget).__name__ +")\n"
+                        else:
+                            backFill = True
+                            codeBase += "# TODO "+type(item).__name__ + ""
+                    
+                    elif item is lastNamed:
+                        if len(lastNamed.findChildren(type(self.currentWidget))) == 1:
+                            codeBase += "wobj = "+onWidget+".findChild("+ type(self.currentWidget).__name__ +")\n"
                         else:
                             backFill = True
                             codeBase += "# TODO "+type(item).__name__ + ""
                     elif backFill:
                         codeBase += " > "+type(item).__name__ +""
                 
-                
+            tobj = []    
             #print ("PATH", path, codeBase)
+            if 'wobj = ' in codeBase:
+                vals = {  }
+                codePrepare = re.sub(r'wobj = (\w+?)\.findChild\(',r'wobj = \1.findChildren(',codeBase.replace('from krita import *',''))
+                print ("code", codePrepare)
+                codeCheck =  compile( codePrepare, '<string>', 'exec' )
+                exec(codeCheck, vals, globals())
                 
-                
+                tobj = vals['__builtins__']['globals']()['wobj']
+                if len(tobj) > 1:
+                    codeBase += "\n # Warning, multiple instances of item found. Consider using findChildren() instead of findChild or chain findChild through named parents"
+
             
             self.caller.centralWidget.consoleInputTextEdit.setText(codeBase)
             self.caller.centralWidget.tabWidget.setCurrentIndex(2)
