@@ -1007,6 +1007,8 @@ Would you like to download the API details(less than 200kb of data) automaticall
             self.caller.centralWidget.tabWidget.setCurrentIndex(1)
             
         def findAncestor(self, ancestor, obj):
+            if not hasattr(obj, 'parent'): return False
+
             parent = obj.parent()
             while True:
                 if not parent:
@@ -1110,6 +1112,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
             self.tableModel = QStandardItemModel()
             self.proxyTableModel = QSortFilterProxyModel()
             self.proxyTableModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+            self.proxyTableModel.setFilterKeyColumn(-1)
             self.tableModel.setHorizontalHeaderLabels(['Name', "Type", 'Value'])
 
             self.proxyTableModel.setSourceModel(self.tableModel)
@@ -1323,7 +1326,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 #        break
                 #"""
             elif statusbar:
-                codeBase = "from krita import *\n\nqsbar = Krita.instance().activeWindow().qwindow().statusBar()\n"
+                codeBase = "from krita import *\n\nqsbar = Krita.instance().activeWindow().qwindow().statusBar()\n#warning: statusbar is often empty when no document is open\n"
                 onWidget = "qsbar"
                 path.pop()
 
@@ -1404,7 +1407,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
 
         def searchTableFilter(self, text):
-            self.proxyTableModel.setFilterFixedString(text)
+            self.proxyTableModel.setFilterWildcard(text)
         
         def selectItemByRef(self, obj):
             pass
@@ -1485,6 +1488,15 @@ Would you like to download the API details(less than 200kb of data) automaticall
             
             inheritsFrom = []
             
+            otherMethods = {}
+            
+            for k in dir(obj):
+                if not k.startswith('__'):
+                    objAttr = getattr(obj,k)
+                    
+                    if hasattr(objAttr,'__name__'):
+                        otherMethods[objAttr.__name__] = True
+            
 
             while True:
                 for i in range(meta.propertyOffset(), meta.propertyCount(), 1 ):
@@ -1514,6 +1526,9 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     pnames = meth.parameterNames()
                     ptypes = meth.parameterTypes()
                     className = None
+                    
+                    if meth.name() in otherMethods:
+                        del otherMethods[k]
                     
                     methName = str(meth.name(), 'utf-8') + "(" + str(b','.join( [ ptypes[i]+b" "+pnames[i] for i in range(0,meth.parameterCount()) ] ), 'utf-8') + ")"
                     if methName not in metaDict['methods']:
@@ -1562,7 +1577,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 
                 
             parentItem.appendRow([
-                self.subheaderItem("Methods"),
+                self.subheaderItem("Slots and Signals"),
                 self.subheaderItem(""),
                 self.subheaderItem("")
             ])
@@ -1576,6 +1591,28 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 item[0].setData(meth, 101)
                 
                 parentItem.appendRow(item)
+                
+            parentItem.appendRow([
+                self.subheaderItem("Methods"),
+                self.subheaderItem(""),
+                self.subheaderItem("")
+            ])
+
+            for k in sorted(otherMethods.keys()):
+                if not k.startswith('__'):
+                    objDoc = getattr(obj,k).__doc__
+                    if '(self' in objDoc:
+                        objSig = objDoc.split(' -> ')
+                        
+                        item = [
+                            QStandardItem( objSig[0].replace('(self, ','(').replace('(self)','()') ),
+                            QStandardItem( 'Method' ),
+                            QStandardItem( objSig[1] if len(objSig) > 1 else 'void' ),
+                        ]
+                        
+                        item[0].setData(meth, 101)
+                        
+                        parentItem.appendRow(item)
                 
         def subheaderItem(self, text):
             objectHeader = QStandardItem(text)
