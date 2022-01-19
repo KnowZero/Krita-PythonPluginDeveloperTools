@@ -1527,10 +1527,12 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     ptypes = meth.parameterTypes()
                     className = None
                     
-                    if meth.name() in otherMethods:
-                        del otherMethods[k]
+                    methName = str(meth.name(), 'utf-8')
                     
-                    methName = str(meth.name(), 'utf-8') + "(" + str(b','.join( [ ptypes[i]+b" "+pnames[i] for i in range(0,meth.parameterCount()) ] ), 'utf-8') + ")"
+                    if methName in otherMethods:
+                        del otherMethods[methName]
+                    
+                    methName += "(" + str(b','.join( [ ptypes[i]+b" "+pnames[i] for i in range(0,meth.parameterCount()) ] ), 'utf-8') + ")"
                     if methName not in metaDict['methods']:
                         methType = self.METHOD_ACCESS[int(meth.access())] + " " + self.METHOD_TYPES[int(meth.methodType())]
                         
@@ -1601,7 +1603,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
             for k in sorted(otherMethods.keys()):
                 if not k.startswith('__'):
                     objDoc = getattr(obj,k).__doc__
-                    if '(self' in objDoc:
+                    if objDoc and '(self' in objDoc:
                         objSig = objDoc.split(' -> ')
                         
                         item = [
