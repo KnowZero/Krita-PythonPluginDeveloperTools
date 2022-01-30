@@ -22,6 +22,9 @@ https://docs.krita.org/en/user_manual/python_scripting/install_custom_python_plu
 **Inspector** - Lets you browse/search the PyQt5 tree and also view all the properties (including inherited ones).
   With quick access to QT5 docs, parent traversing, code generation (code generation is primitive at this point but will improve with time), and show location of widget(when holding the button).
 
+***Event/Signal Viewer*** - Ability to monitor signals and events and inject code into them. Just select the object in question in Inspector and press the "Event and Signal Viewer/Debugger" button. (Beta)  
+
+
 **Console** - A more basic version of scripter made for mostly quick tests or actions. Enter will execute the code (Use shift+enter for new lines if needed)
 
 You can also bind console to your favorite text editor and send the code from the text editor directly to console.
