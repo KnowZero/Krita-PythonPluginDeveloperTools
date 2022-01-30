@@ -7,6 +7,9 @@ from contextlib import redirect_stdout
 import io
 import re
 import json
+import pprint
+from datetime import datetime
+import sys
 
 
 from .GetKritaAPI import *
@@ -512,6 +515,14 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     #>>metaDict['methods'][methName]={ 'class': className, 'type':0, 'name': str(meth.name(), 'utf-8'), 'rec':[ methName, methType, meth.typeName() ] }
 
             return metaDict
+
+    class IOSTD(io.TextIOBase):
+        def __init__(self, caller, mode):
+            self.caller = caller
+            self.mode = mode
+            
+        def write(self, content):
+            self.caller.processSTD(content,self.mode)
 
     class PluginDevToolsConsole():
         EXECUTE_KEYS = [
@@ -1090,6 +1101,8 @@ Would you like to download the API details(less than 200kb of data) automaticall
             self.currentWidget = None
             self.currentTableItem = None
             
+            self.eventViewer = self.PluginDevToolsEventViewer(self)
+            
             self.treeObjList = []
             
             self.treeView = caller.centralWidget.inspectorTreeView
@@ -1128,6 +1141,8 @@ Would you like to download the API details(less than 200kb of data) automaticall
             self.caller.centralWidget.inspectorObjDocsBtn.setIcon( Krita.instance().icon('system-help') )
             self.caller.centralWidget.inspectorSelectorBtn.setIcon( Krita.instance().icon('pivot-point') )
             
+            self.caller.centralWidget.inspectorEventViewerBtn.setIcon( Krita.instance().icon('klipper') )
+            
             
             self.caller.centralWidget.inspectorObjDocsBtn.clicked.connect(self.getObjDocs)
             self.caller.centralWidget.inspectorPropDocsBtn.clicked.connect(self.getPropDocs)
@@ -1135,6 +1150,8 @@ Would you like to download the API details(less than 200kb of data) automaticall
             self.caller.centralWidget.inspectorParentBtn.clicked.connect(self.getParent)
             
             self.caller.centralWidget.inspectorRefreshBtn.clicked.connect(self.refreshItems)
+            
+            self.caller.centralWidget.inspectorEventViewerBtn.clicked.connect(self.openEventViewer)
             
             self.showCurrentWidgetHighlight = False
             
@@ -1163,6 +1180,10 @@ Would you like to download the API details(less than 200kb of data) automaticall
         def unselected(self):
             if self.showCurrentWidgetHighlight:
                 self.showCurrentWidget(False, True)
+                
+        def openEventViewer(self):
+            self.eventViewer.showFor(self.currentWidget)
+
         
         def showUpdateLayout(self, rec):
             if sip.isdeleted(self.currentWidget): return
@@ -1498,61 +1519,21 @@ Would you like to download the API details(less than 200kb of data) automaticall
                         otherMethods[objAttr.__name__] = True
             
 
-            while True:
-                for i in range(meta.propertyOffset(), meta.propertyCount(), 1 ):
-                    prop = meta.property(i)
-                    propName = prop.name()
 
-                    if propName not in metaDict['properties']:
-                        if propName == 'sizeHint' and obj.property('minimumSizeHint').isEmpty(): continue
-                        propType = prop.typeName()
-                        propValue = ''
-                        try:
-                            propValue = pprint.pformat( obj.property(propName) )
-                        except TypeError:
-                            propValue = "[unavailable]"
-                        className = None
-
-                        if inheritsFrom:
-                            propType = propType + " [from "+meta.className()+"]"
-                            className = meta.className()
-                        else:
-                            className = type(obj).__name__
-                            
-                        metaDict['properties'][propName]={ 'class': meta.className(), 'type':9, 'name': propName, 'rec':[ propName, propType, propValue ] }
                 
-                for i in range(meta.methodOffset(), meta.methodCount(), 1 ):
-                    meth = meta.method(i)
-                    pnames = meth.parameterNames()
-                    ptypes = meth.parameterTypes()
-                    className = None
-                    
-                    methName = str(meth.name(), 'utf-8')
-                    
-                    if methName in otherMethods:
-                        del otherMethods[methName]
-                    
-                    methName += "(" + str(b','.join( [ ptypes[i]+b" "+pnames[i] for i in range(0,meth.parameterCount()) ] ), 'utf-8') + ")"
-                    if methName not in metaDict['methods']:
-                        methType = self.METHOD_ACCESS[int(meth.access())] + " " + self.METHOD_TYPES[int(meth.methodType())]
-                        
-                        if inheritsFrom:
-                            methType = methType + " [from "+meta.className()+"]"
-                            className = meta.className()
-                        else:
-                            className = type(obj).__name__
-                        
-                        metaDict['methods'][methName]={ 'class': meta.className(), 'type':0, 'name': str(meth.name(), 'utf-8'), 'rec':[ methName, methType, meth.typeName() ] }
+            self.fillMethods(obj, metaDict, otherMethods, inheritsFrom)
                 
                
-                meta = meta.superClass()
-                if meta:
-                    inheritsFrom.append(meta.className())
-                else:
-                    break
 
+            '''
+            if hasattr(obj, 'model'):
+                self.fillMethods(obj.model(), metaDict, {}, [], 'model().')
+                if hasattr(obj.model(),'sourceModel'):
+                    self.fillMethods(obj.model().sourceModel(),  metaDict, {}, [], 'model().sourceModel().')
 
-            
+            if hasattr(obj, 'selectionModel'):
+                self.fillMethods(obj.selectionModel(), metaDict, {}, [], 'selectionModel().')
+            '''
 
             parentItem.appendRow([
                 QStandardItem( "Inherits From" ),
@@ -1615,7 +1596,63 @@ Would you like to download the API details(less than 200kb of data) automaticall
                         item[0].setData(meth, 101)
                         
                         parentItem.appendRow(item)
-                
+        
+        def fillMethods(self,obj, metaDict, otherMethods, inheritsFrom, prepend=''):
+            meta = obj.metaObject()
+            
+            while True:
+                for i in range(meta.propertyOffset(), meta.propertyCount(), 1 ):
+                    prop = meta.property(i)
+                    propName = prop.name()
+
+                    if propName not in metaDict['properties']:
+                        if propName == 'sizeHint' and obj.property('minimumSizeHint').isEmpty(): continue
+                        propType = prop.typeName()
+                        propValue = ''
+                        try:
+                            propValue = pprint.pformat( obj.property(propName) )
+                        except TypeError:
+                            propValue = "[unavailable]"
+                        className = None
+
+                        if inheritsFrom:
+                            propType = propType + " [from "+meta.className()+"]"
+                            className = meta.className()
+                        else:
+                            className = type(obj).__name__
+                            
+                        metaDict['properties'][propName]={ 'class': meta.className(), 'type':9, 'name': propName, 'rec':[ propName, propType, propValue ] }
+            
+            
+                for i in range(meta.methodOffset(), meta.methodCount(), 1 ):
+                    meth = meta.method(i)
+                    pnames = meth.parameterNames()
+                    ptypes = meth.parameterTypes()
+                    className = None
+                    
+                    methName = str(meth.name(), 'utf-8')
+                    
+                    if methName in otherMethods:
+                        del otherMethods[methName]
+                    
+                    methName += "(" + str(b','.join( [ ptypes[i]+b" "+pnames[i] for i in range(0,meth.parameterCount()) ] ), 'utf-8') + ")"
+                    if methName not in metaDict['methods']:
+                        methType = self.METHOD_ACCESS[int(meth.access())] + " " + self.METHOD_TYPES[int(meth.methodType())]
+                        
+                        if inheritsFrom:
+                            methType = methType + " [from "+meta.className()+"]"
+                            className = meta.className()
+                        else:
+                            className = type(obj).__name__
+                        
+                        metaDict['methods'][methName]={ 'class': meta.className(), 'type':0, 'name': str(meth.name(), 'utf-8'), 'rec':[ prepend+methName, methType, meth.typeName() ] }
+                        
+                meta = meta.superClass()
+                if meta:
+                    inheritsFrom.append(meta.className())
+                else:
+                    break
+        
         def subheaderItem(self, text):
             objectHeader = QStandardItem(text)
             font = objectHeader.font()
@@ -1728,5 +1765,554 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
         def hasMethod(self, obj, method):
             return True if hasattr(obj, method) and callable(getattr(obj, method)) else False
+
+
+
+
+
+        class PluginDevToolsEventViewer(QDialog):
+            
+            def __init__(self, caller):
+                super().__init__()
+                
+                self.caller = caller
+                self.oldSTDOUT = None
+                self.newSTDOUT = caller.caller.IOSTD(self,0)
+                self.stdoutBuffer = []
+                
+                self.oldSTDERR = None
+                self.newSTDERR = caller.caller.IOSTD(self,1)
+                self.stderrBuffer = []
+                
+                self.started = False
+                self.startTime = 0.00
+                self.lastEventType = ''
+                self.lastEventItem = None
+                self.codeItem = ['','']
+                
+                self.currentWidget = None
+                
+                self.centralWidget = uic.loadUi(os.path.dirname(os.path.realpath(__file__)) + '/EventViewerWidget.ui')
+                
+                self.centralWidget.startBtn.setIcon(Krita.instance().icon('media-playback-start'))
+                
+                layout = QVBoxLayout()
+                layout.addWidget(self.centralWidget)
+
+                self.setLayout(layout)
+                
+                self.eventDict = {}
+                self.signalsDict = { 'current':{} }
+                
+                self.listenTreeModel = QStandardItemModel()
+                self.proxyListenTreeModel = QSortFilterProxyModel()
+                self.proxyListenTreeModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+                self.proxyListenTreeModel.setRecursiveFilteringEnabled(True)
+                self.proxyListenTreeModel.setFilterKeyColumn(-1)
+
+
+                self.proxyListenTreeModel.setSourceModel(self.listenTreeModel)
+                self.centralWidget.eventListenTreeView.setModel(self.proxyListenTreeModel)
+            
+                #self.treeSelectModel = self.treeView.selectionModel()
+
+                self.signalTreeModel = QStandardItemModel()
+                self.proxySignalTreeModel = QSortFilterProxyModel()
+                self.proxySignalTreeModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+                self.proxySignalTreeModel.setRecursiveFilteringEnabled(True)
+                self.proxySignalTreeModel.setFilterKeyColumn(-1)
+
+
+                self.proxySignalTreeModel.setSourceModel(self.signalTreeModel)
+                self.centralWidget.signalConnectTreeView.setModel(self.proxySignalTreeModel)
+
+
+                self.connectTreeModel = QStandardItemModel()
+                self.proxyConnectTreeModel = QSortFilterProxyModel()
+                self.proxyConnectTreeModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+                self.proxyConnectTreeModel.setRecursiveFilteringEnabled(True)
+                self.proxyConnectTreeModel.setFilterKeyColumn(-1)
+
+
+                self.proxyConnectTreeModel.setSourceModel(self.connectTreeModel)
+                self.centralWidget.eventConnectTreeView.setModel(self.proxyConnectTreeModel)
+
+
+                self.eventDataTableModel = QStandardItemModel()
+                self.proxyEventDataTableModel = QSortFilterProxyModel()
+                self.proxyEventDataTableModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+                self.proxyEventDataTableModel.setFilterKeyColumn(-1)
+                
+
+                self.proxyEventDataTableModel.setSourceModel(self.eventDataTableModel)
+                self.centralWidget.eventDataTableView.setModel(self.proxyEventDataTableModel)
+
+                
+                self.centralWidget.eventConnectTreeView.clicked.connect(self.connectItemClicked)
+                self.centralWidget.signalConnectTreeView.clicked.connect(self.connectItemClicked)
+                self.centralWidget.eventListenTreeView.clicked.connect(self.listenItemClicked)
+                
+                self.centralWidget.startBtn.clicked.connect(self.toggle)
+                self.centralWidget.clearBtn.clicked.connect(self.listenTreeModel.clear)
+                self.centralWidget.eventCodeBtn.clicked.connect(self.updateCode)
+                
+
+            def closeEvent(self, event):
+                self.stop()
+                super().closeEvent(event)
+                
+            def updateCode(self):
+                content = self.centralWidget.eventCodeTextEdit.toPlainText()
+                
+                if self.codeItem[0] != '':
+                    if self.codeItem[0] == 'event':
+                        self.eventDict[self.codeItem[1]]['code'] = content
+                    else:
+                        self.signalsDict['current'][self.codeItem[1]]['code'] = content
+                
+            def fillEvents(self):
+                self.connectTreeModel.clear()
+                self.signalTreeModel.clear()
+                
+                # SIGNALS
+                rootItem = self.signalTreeModel.invisibleRootItem()
+
+                rootItem.appendRow([
+                    QStandardItem( Krita.instance().icon('visible'), '' ),
+                    QStandardItem("Widget Signals"),
+
+                ])
+                self.widgetSignalsItemHeader = rootItem.child(rootItem.rowCount() - 1)
+                self.widgetSignalsItemHeader.setData('signal',101)
+                self.widgetSignalsItemHeader.setData('-current',102)
+                
+                self.fillSignalsFromObj(self.currentWidget)
+                
+                '''
+                #USE CHAIN OBJ INSTEAD AS MODEL CAN BE DELETED
+                
+                if hasattr(self.currentWidget,'model'):
+                    self.fillSignalsFromObj(self.currentWidget.model(),'model().')
+                    if hasattr(self.currentWidget.model(),'sourceModel'):
+                        self.fillSignalsFromObj(self.currentWidget.model().sourceModel(),'model().sourceModel().')
+
+                if hasattr(self.currentWidget,'selectionModel'):
+                    self.fillSignalsFromObj(self.currentWidget.selectionModel(),'selectionModel().')
+                '''    
+                self.centralWidget.signalConnectTreeView.expandAll()
+
+
+                # EVENTS
+                rootItem = self.connectTreeModel.invisibleRootItem()
+                rootItem.appendRow([
+                    QStandardItem( Krita.instance().icon('visible'), '' ),
+                    QStandardItem("Events"),
+
+                ])
+                
+                self.eventItemHeader = rootItem.child(rootItem.rowCount() - 1)
+                
+                self.eventItemHeader.setData('event',101)
+                self.eventItemHeader.setData(-11,102)
+                
+                for evName in dir(QEvent):
+                    attr = getattr(QEvent,evName)
+                    if isinstance(attr,QEvent.Type): 
+                        self.eventDict[attr]={ 'name': evName, 'doc': evName+'(obj, event)', 'active': 1, 'item': None, 'used': False, 'code':'' }
+                        
+                for evId in sorted(self.eventDict.keys()):
+                    self.eventDict[evId]['item'] = [
+                        QStandardItem( Krita.instance().icon('visible'), '' ),
+                        QStandardItem('['+str(evId)+'] '+self.eventDict[evId]['name'])
+                    ]
+                    self.eventDict[evId]['item'][0].setData('event',101)
+                    self.eventDict[evId]['item'][0].setData(evId,102)
+
+                    self.eventItemHeader.appendRow(self.eventDict[evId]['item'])
+                    
+                self.centralWidget.eventConnectTreeView.expandAll()
+            
+
+            def fillSignalsFromObj(self, obj, prepend = ''):
+                meta = obj.metaObject()
+                
+                inheritsFrom = []
+                
+                while True:
+                    for i in range(meta.methodOffset(), meta.methodCount(), 1 ):
+                        self.addSignalItem(obj, meta, i, inheritsFrom, prepend)
+
+                    meta = meta.superClass()
+                    
+                    if meta:
+                        inheritsFrom.append(meta.className())
+                    else:
+                        break
+
+            def addSignalItem(self, obj, meta, i, inheritsFrom, prepend=''):
+                meth = meta.method(i)
+                pnames = meth.parameterNames()
+                ptypes = meth.parameterTypes()
+                className = None
+                
+                methName = str(meth.name(), 'utf-8')
+                
+            
+                methDoc = methName + "(" + str(b','.join( [ ptypes[i]+b" "+pnames[i] for i in range(0,meth.parameterCount()) ] ), 'utf-8') + ")"
+
+                methType = self.caller.METHOD_ACCESS[int(meth.access())] + " " + self.caller.METHOD_TYPES[int(meth.methodType())]
+                
+              
+                
+                if methType == 'Public Signal' and methName not in self.signalsDict['current']:
+                    if inheritsFrom:
+                        methType = " [from "+meta.className()+"]"
+                        className = meta.className()
+                    else:
+                        methType = ''
+                        className = type(obj).__name__
+                    
+
+                    self.signalsDict['current'][methName] = { 
+                        'name':methName,
+                        'params':ptypes,
+                        'doc': methDoc,
+                        'active':1,
+                        'used':False,
+                        'code':'',
+                        'item':[
+                            QStandardItem( Krita.instance().icon('visible'), '' ),
+                            QStandardItem(prepend+methDoc+methType)
+                        ]
+                    }
+                    self.signalsDict['current'][methName]['item'][0].setData('signal',101)
+                    self.signalsDict['current'][methName]['item'][0].setData(methName,102)
+                    self.signalsDict['current'][methName]['item'][0].setData('current',103)
+                    self.signalsDict['current'][methName]['obj'] = obj
+                    self.signalsDict['current'][methName]['method'] = functools.partial(self.signalFilter,prepend,methName)
+
+                    self.widgetSignalsItemHeader.appendRow(self.signalsDict['current'][methName]['item'])
+            
+            def toggle(self):
+                if not self.started:
+                    self.start()
+                else:
+                    self.stop()
+            
+            def start(self):
+                self.started = True
+                self.startTime = datetime.now()
+                self.listenTreeModel.clear()
+                self.listenTreeModel.setHorizontalHeaderLabels(['Time', 'Name', 'Data'])
+                
+                self.lastEventItem = None
+                self.lastEventType = ''
+                
+                self.centralWidget.startBtn.setIcon(Krita.instance().icon('media-playback-stop'))
+                self.centralWidget.eventFilterTypeCmb.setEnabled(False)
+                self.centralWidget.outputCmb.setEnabled(False)
+                
+                for evId in self.eventDict:
+                    self.eventDict[evId]['item'][0].setData(QBrush(Qt.transparent), Qt.BackgroundRole)
+                    self.eventDict[evId]['item'][1].setData(QBrush(Qt.transparent), Qt.BackgroundRole)
+
+                for methName in self.signalsDict['current']:
+                    self.signalsDict['current'][methName]['item'][0].setData(QBrush(Qt.transparent), Qt.BackgroundRole)
+                    self.signalsDict['current'][methName]['item'][1].setData(QBrush(Qt.transparent), Qt.BackgroundRole)
+
+                    
+                if self.centralWidget.outputCmb.currentIndex() == 1:
+                    self.oldSTDOUT = sys.stdout
+                    self.oldSTDERR = sys.stderr
+                    sys.stdout = self.newSTDOUT
+                    sys.stderr = self.newSTDERR
+                    
+                    
+                for methName in self.signalsDict['current']:
+                    #print ("MM", methName)
+                    #self.signalsDict['current'][methName]['obj'].pyqtConfigure(**{ methName: self.signalsDict['current'][methName]['method']})
+                    #QObject.connect(self.signalsDict['current'][methName]['obj'],QtCore.SIGNAL(self.signalsDict['current'][methName]['doc']),self.signalsDict['current'][methName]['method'])
+                    
+                    #look into this way
+                    #>>>>getattr(self.signalsDict['current'][methName]['obj'],methName)[**self.signalsDict['current'][methName]['params']].connect(self.signalsDict['current'][methName]['method'])
+                    
+                    meth = getattr(self.signalsDict['current'][methName]['obj'],methName)
+                    if isinstance(meth,type(pyqtBoundSignal())) or isinstance(meth,type(pyqtSignal())):
+                        meth.connect(self.signalsDict['current'][methName]['method'])
+                    else:
+                        self.signalsDict['current'][methName]['item'][0].setData(QBrush(Qt.darkRed), Qt.BackgroundRole)
+                    
+                
+                if self.centralWidget.eventFilterTypeCmb.currentIndex() == 0:
+                    self.currentWidget.installEventFilter(self)
+                elif self.centralWidget.eventFilterTypeCmb.currentIndex() == 1:
+                    qApp.installEventFilter(self)
+                    
+                    
+                    
+
+            def stop(self):
+                if self.started:
+                    if self.centralWidget.eventFilterTypeCmb.currentIndex() == 0:
+                        if not sip.isdeleted(self.currentWidget): self.currentWidget.removeEventFilter(self)
+                    elif self.centralWidget.eventFilterTypeCmb.currentIndex() == 1:
+                        qApp.removeEventFilter(self)
+                    
+                    
+                        for methName in self.signalsDict['current']:
+                            if not sip.isdeleted(self.signalsDict['current'][methName]['obj']):
+                                meth = getattr(self.signalsDict['current'][methName]['obj'],methName)
+                                if isinstance(meth,type(pyqtBoundSignal())) or isinstance(meth,type(pyqtSignal())):
+                                    meth.disconnect(self.signalsDict['current'][methName]['method'])
+                    
+                    if self.centralWidget.outputCmb.currentIndex() == 1:
+                        sys.stdout = self.oldSTDOUT
+                        sys.stderr = self.oldSTDERR
+                        
+                    self.started = False
+                    self.centralWidget.startBtn.setIcon(Krita.instance().icon('media-playback-start'))
+                    #self.centralWidget.startBtn.setEnabled(True)
+                    self.centralWidget.eventFilterTypeCmb.setEnabled(True)
+                    self.centralWidget.outputCmb.setEnabled(True)
+
+
+            def processSTD(self, content, mode=0):
+                
+                splitContent = content.split('\n')
+                if mode == 0:
+                    self.stdoutBuffer.append(splitContent[0])
+                else:
+                    self.stderrBuffer.append(splitContent[0])
+                
+                if len(splitContent) > 1:
+                    dt = str(datetime.now() - self.startTime).replace('0:00:','')
+                    rootItem = self.listenTreeModel.invisibleRootItem()
+                    item = QStandardItem(dt)
+                    
+                    rootItem.appendRow([
+                            item,
+                            QStandardItem('STDOUT' if mode == 0 else 'STDERR'),
+                            QStandardItem(''.join(self.stdoutBuffer if mode == 0 else self.stderrBuffer))
+                                
+                    ])
+                    
+                    
+                    item.setData({'Content':self.stdoutBuffer if mode == 0 else self.stderrBuffer},101)
+                    self.centralWidget.eventListenTreeView.scrollToBottom()
+                    if mode == 0:
+                        self.stdoutBuffer = [splitContent[1]]
+                    else:
+                        self.stderrBuffer = [splitContent[1]]
+            
+            
+            
+            def signalFilter(self, prepend, methName, *params):
+                if methName in self.signalsDict['current'] and self.signalsDict['current'][methName]['active'] > 0:
+                    self.lastEventType=methName
+                    self.lastEventItem=None
+                    
+                    
+                    if not self.signalsDict['current'][methName]['used']:
+                        self.signalsDict['current'][methName]['item'][0].setData(QBrush(Qt.darkGreen), Qt.BackgroundRole)
+                        self.signalsDict['current'][methName]['item'][1].setData(QBrush(Qt.darkGreen), Qt.BackgroundRole)
+
+                    signalData = ', '.join(map(str,params))
+                
+                    dt = str(datetime.now() - self.startTime).replace('0:00:','')
+                    
+                    if self.centralWidget.outputCmb.currentIndex() <= 1:
+                        rootItem = self.listenTreeModel.invisibleRootItem()
+                        item = QStandardItem(dt)
+                        rootItem.appendRow([
+                            item,
+                            QStandardItem('[SIG] '+prepend+methName),
+                            QStandardItem(signalData)
+
+                            
+                        ])
+                        item.setData({'Content':map(str,params)},101)
+                        self.centralWidget.eventListenTreeView.scrollToBottom()
+                    elif self.centralWidget.outputCmb.currentIndex() == 2:
+                        print (dt+'\t'+methName+'\t'+signalData)
+                        
+                    if ''.join(self.signalsDict['current'][methName]['code'].split()) != '':
+                        code = compile( self.signalsDict['current'][methName]['code'], '<string>', 'exec' )
+                        exec(code, locals(), globals())
+            
+            
+            def eventFilter(self, obj, event):
+                evId = event.type()
+                if evId in self.eventDict and self.eventDict[evId]['active'] > 0 and obj == self.currentWidget:
+                    eventDataDict = {}
+                    foldMode = self.centralWidget.formatOutputCmb.currentIndex()
+                    repeatedItem = evId == self.lastEventType
+                    if not repeatedItem: self.lastEventItem = None
+                    
+                    
+                    if not repeatedItem or foldMode == 1 or foldMode == 2:
+                        self.lastEventType=evId
+                        if not self.eventDict[evId]['used']:
+                            self.eventDict[evId]['item'][0].setData(QBrush(Qt.darkGreen), Qt.BackgroundRole)
+                            self.eventDict[evId]['item'][1].setData(QBrush(Qt.darkGreen), Qt.BackgroundRole)
+                            
+                        eventData = ''
+                        attrList = ['accept','ignore','isAccepted','setAccepted','spontaneous','type']
+                            
+                        for attrName in dir(event):
+                            if not attrName[0].isupper() and attrName[0] != '_' and attrName not in attrList:
+                                attr = getattr(event,attrName)
+                                doc = attr.__doc__
+                                
+                                eventDataDict[doc]=''
+                                
+                                if '(self)' in doc and '->' in doc:
+                                    attrValue = pprint.pformat((attr)()).replace('PyQt5.','').replace('QtCore.','').replace('QtGui.','')
+                                    
+                                    eventDataDict[doc]=attrValue
+                                    if not attrValue.startswith('<'):
+                                        eventData+=attrName+': '+attrValue+', '
+                        
+                        dt = str(datetime.now() - self.startTime).replace('0:00:','')
+                        
+                        if self.centralWidget.outputCmb.currentIndex() <= 1:
+                            rootItem = self.listenTreeModel.invisibleRootItem()
+
+                            item = QStandardItem(dt)
+                            if foldMode == 1 or foldMode == 2:
+                                if self.lastEventItem:
+                                    rootItem = self.lastEventItem
+                                else:
+                                    self.lastEventItem = item
+                                    
+                            
+                            rootItem.appendRow([
+                                item,
+                                QStandardItem('['+str(evId)+'] '+self.eventDict[evId]['name']),
+                                QStandardItem(eventData)
+
+                                
+                            ])
+                            item.setData(eventDataDict,101)
+                            if not repeatedItem and foldMode == 2: self.centralWidget.eventListenTreeView.expand(self.proxyListenTreeModel.mapFromSource(item.index()))
+                            self.centralWidget.eventListenTreeView.scrollToBottom()
+                        elif self.centralWidget.outputCmb.currentIndex() == 2:
+                            print ( ('\t' if repeatedItem else '') + dt+'\t'+'['+str(evId)+'] '+self.eventDict[evId]['name']+'\t'+eventData)
+
+
+                        if ''.join(self.eventDict[evId]['code'].split()) != '':
+                            params = (obj, event)
+                            code = compile( self.eventDict[evId]['code'], '<string>', 'exec' )
+                            exec(code, locals(), globals())
+                        
+                return False
+            
+            def showFor(self, w):
+                if w:
+                    self.stop()
+                    self.signalsDict={'current':{}}
+                    self.eventDict={}
+                    self.currentWidget = w
+                    self.centralWidget.eventTargetLabel.setText( 'Events For: '+w.objectName()+' - '+w.metaObject().className()+' - '+type(w).__name__ )
+                    self.fillEvents()
+                    self.show()
+
+
+            def listenItemClicked(self, idx):
+                self.eventDataTableModel.clear()
+                self.eventDataTableModel.setHorizontalHeaderLabels(['Name', 'Value'])
+                
+                rootItem = self.eventDataTableModel.invisibleRootItem()
+                
+                rootItem.appendRow([QStandardItem("Type"), QStandardItem(idx.siblingAtColumn(1).data(0))])
+                rootItem.appendRow([QStandardItem("Time"), QStandardItem(idx.siblingAtColumn(0).data(0))])
+                
+                
+                
+                eventDataDict = idx.siblingAtColumn(0).data(101)
+                
+                if 'Content' in eventDataDict.keys():
+                    
+                    rootItem.appendRow([self.caller.subheaderItem("Content")])
+                    
+                    for (i, content) in enumerate(eventDataDict['Content']):
+                        rootItem.appendRow([QStandardItem(str(i)),QStandardItem(content)])
+                    
+                else:
+                    rootItem.appendRow([self.caller.subheaderItem("Event Methods")])
+                    
+                    for method in eventDataDict.keys():
+                        rootItem.appendRow([QStandardItem(method.replace('(self, ','(').replace('(self)','()')), QStandardItem(eventDataDict[method])])
+                    
+                    rootItem.appendRow([self.caller.subheaderItem("Standard Methods")])
+                    
+                
+                    for attr in ['accept','ignore','isAccepted','setAccepted','spontaneous','type']:
+                        rootItem.appendRow([QStandardItem(attr+'()'), QStandardItem("")])
+                
+
+            def connectItemClicked(self, idx):
+                if idx.column() == 1:
+                    idx = idx.siblingAtColumn(0)
+                    codeLabelName = 'Code For: '
+                    self.codeItem = [idx.data(101),idx.data(102)]
+                    if idx.data(101) == 'event':
+                        self.centralWidget.eventCodeLabel.setText(codeLabelName + self.eventDict[idx.data(102)]['doc'] )
+                        self.centralWidget.eventCodeTextEdit.setPlainText(self.eventDict[idx.data(102)]['code'])
+                    elif idx.data(101) == 'signal':
+                        self.centralWidget.eventCodeLabel.setText(codeLabelName + self.signalsDict['current'][idx.data(102)]['doc'])
+                        self.centralWidget.eventCodeTextEdit.setPlainText(self.signalsDict['current'][idx.data(102)]['code'])
+                        
+                elif idx.column() == 0:
+                    idxList = []
+                    visible = 1
+                    idxList.append(idx)
+                    
+                    if idx.data(101) == 'event':
+                        if idx.data(102) >= 0:
+                            visible = self.eventDict[idx.data(102)]['active']
+                        else:
+                            evItem = self.connectTreeModel.itemFromIndex(self.proxyConnectTreeModel.mapToSource(idx))
+                            
+                            if idx.data(102) == -11:
+                                visible = 1
+                                evItem.setData(-10,102)
+                            else:
+                                visible = 0
+                                evItem.setData(-11,102)
+                            
+                            for i in range(evItem.rowCount()):
+                                idxList.append( self.proxyConnectTreeModel.mapFromSource(self.connectTreeModel.indexFromItem(evItem.child(i))) )
+                        
+                        for evIdx in idxList:
+                            evId = evIdx.data(102)
+                            evItem = self.connectTreeModel.itemFromIndex(self.proxyConnectTreeModel.mapToSource(evIdx))
+                            evItem.setIcon(Krita.instance().icon('visible' if visible == 0 else 'novisible' ) )
+                            
+                            if evId >= 0:
+                                self.eventDict[evId]['active'] = 0 if visible == 1 else 1
+                    elif idx.data(101) == 'signal':
+                        if not idx.data(102).startswith('-') and not idx.data(102).startswith('+'):
+                            visible = self.signalsDict['current'][idx.data(102)]['active']
+                        else:
+                            sigItem = self.signalTreeModel.itemFromIndex(self.proxySignalTreeModel.mapToSource(idx))
+                            
+                            if idx.data(102).startswith('-'):
+                                visible = 1
+                                sigItem.setData('+current',102)
+                            else:
+                                visible = 0
+                                sigItem.setData('-current',102)
+                                
+                            for i in range(sigItem.rowCount()):
+                                idxList.append( self.proxySignalTreeModel.mapFromSource(self.signalTreeModel.indexFromItem(sigItem.child(i))) )
+                                
+                        for sigIdx in idxList:
+                            methName = sigIdx.data(102)
+                            sigItem = self.signalTreeModel.itemFromIndex(self.proxySignalTreeModel.mapToSource(sigIdx))
+                            sigItem.setIcon(Krita.instance().icon('visible' if visible == 0 else 'novisible' ) )
+                            
+                            if methName in self.signalsDict['current']:
+                                self.signalsDict['current'][methName]['active'] = 0 if visible == 1 else 1
+                            
 
 Krita.instance().addDockWidgetFactory(DockWidgetFactory("pluginDevToolsDocker", DockWidgetFactoryBase.DockBottom, PluginDevToolsDocker))

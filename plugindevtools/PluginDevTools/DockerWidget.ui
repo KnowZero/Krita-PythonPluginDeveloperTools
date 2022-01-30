@@ -240,6 +240,19 @@
               </widget>
              </item>
              <item>
+              <widget class="QToolButton" name="inspectorEventViewerBtn">
+               <property name="toolTip">
+                <string>Event and Signal Viewer/Debugger</string>
+               </property>
+               <property name="text">
+                <string>...</string>
+               </property>
+               <property name="icon">
+                <iconset theme="klipper"/>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QLineEdit" name="inspectorTableFilter">
                <property name="placeholderText">
                 <string>Filter...</string>
