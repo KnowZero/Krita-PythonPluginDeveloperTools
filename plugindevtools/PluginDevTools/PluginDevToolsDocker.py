@@ -1856,10 +1856,14 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 self.centralWidget.clearBtn.clicked.connect(self.listenTreeModel.clear)
                 self.centralWidget.eventCodeBtn.clicked.connect(self.updateCode)
                 
+                
+     
 
-            def closeEvent(self, event):
+            def hideEvent(self, event):
                 self.stop()
-                super().closeEvent(event)
+                super().hideEvent(event)
+
+               
                 
             def updateCode(self):
                 content = self.centralWidget.eventCodeTextEdit.toPlainText()
@@ -2059,11 +2063,11 @@ Would you like to download the API details(less than 200kb of data) automaticall
                         qApp.removeEventFilter(self)
                     
                     
-                        for methName in self.signalsDict['current']:
-                            if not sip.isdeleted(self.signalsDict['current'][methName]['obj']):
-                                meth = getattr(self.signalsDict['current'][methName]['obj'],methName)
-                                if isinstance(meth,type(pyqtBoundSignal())) or isinstance(meth,type(pyqtSignal())):
-                                    meth.disconnect(self.signalsDict['current'][methName]['method'])
+                    for methName in self.signalsDict['current']:
+                        if not sip.isdeleted(self.signalsDict['current'][methName]['obj']):
+                            meth = getattr(self.signalsDict['current'][methName]['obj'],methName)
+                            if isinstance(meth,type(pyqtBoundSignal())) or isinstance(meth,type(pyqtSignal())):
+                                meth.disconnect(self.signalsDict['current'][methName]['method'])
                     
                     if self.centralWidget.outputCmb.currentIndex() == 1:
                         sys.stdout = self.oldSTDOUT
