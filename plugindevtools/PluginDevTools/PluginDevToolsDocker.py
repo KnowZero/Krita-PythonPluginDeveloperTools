@@ -1231,10 +1231,10 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 attrValue = QPointF(*params)
             elif attrType == 'QSize':
                 params = tuple( map(int, (attrValue.split('QSize('))[1].replace(")","").split(",") ) )
-                attrValue = QPoint(*params)
+                attrValue = QSize(*params)
             elif attrType == 'QSizeF':
                 params = tuple( map(float, (attrValue.split('QSizeF('))[1].replace(")","").split(",") ) )
-                attrValue = QPointF(*params)
+                attrValue = QSizeF(*params)
 
 
             if hasattr(self.currentWidget,attrName):
