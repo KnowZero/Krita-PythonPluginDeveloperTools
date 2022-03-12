@@ -432,7 +432,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                                     propName[0]
                                 )
                             if 'Private' in metaDict2['methods'][key]['rec'][1]:
-                                propName[0] = propName[0] + " [private]"
+                                propName[0] = "[private] " + propName[0]
                             #del metaDict2['methods'][key] #testing
                             
                         if staticMethod:
@@ -458,7 +458,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     'type':0, 
                     'name': key, 
                     'pnames': [ p['name'] for p in meta['methods'][key]['params'] ], 
-                    'rec':[ key+'('+', '.join([ p['type']+' '+p['name']+('='+p['optional'] if p['optional'] else '') for p in meta['methods'][key]['params'] ])+')', meta['methods'][key]['access'], meta['methods'][key]['return'] ] }
+                    'rec':[ ('[private] ' if 'private' in meta['methods'][key]['access'] else '' )+key+'('+', '.join([ p['type']+' '+p['name']+('='+p['optional'] if p['optional'] else '') for p in meta['methods'][key]['params'] ])+')', meta['methods'][key]['access'], meta['methods'][key]['return'] ] }
 
             for declare in meta['declare']:
                 #print ("m", declare)
@@ -1857,13 +1857,11 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 self.centralWidget.eventCodeBtn.clicked.connect(self.updateCode)
                 
                 
-     
 
             def hideEvent(self, event):
                 self.stop()
                 super().hideEvent(event)
 
-               
                 
             def updateCode(self):
                 content = self.centralWidget.eventCodeTextEdit.toPlainText()
