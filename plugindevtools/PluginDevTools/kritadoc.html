@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+    <header></header>
+    <style>
+    .fileName {
+      cursor: pointer;
+      color: #008000;
+    }
+    
+    .fileContent {
+      padding-left: 16px;
+      padding-bottom: 16px;
+    }
+    
+    .kritaType {
+      cursor: pointer;
+      color: #008000;
+    }
+    
+    .methodName {
+      font-weight: 900;
+      line-height: 3rem;
+    }
+    
+    .methodDoc {
+      font-color: #444444;
+      padding-left: 16px;
+      padding-bottom: 16px;
+    }
+
+    .classDoc {
+      font-color: #444444;
+      padding-left: 16px;
+      padding-bottom: 16px;
+    }
+    
+    .classParent {
+      padding-bottom: 16px;
+    }
+    
+    .codeBox {
+      display: block;
+      white-space: pre;
+      background-color: #DDDDDD;
+    }
+    
+    .methodReturn {
+      font-style: italic;
+    }
+    
+    .paramType {
+      font-style: italic;
+    }
+    </style>
+    
+    
+    <main>
+    
+    <h1>Classes <select id="branch" onchange="setBranch(this.value)"></select></h1>
+    <div id="classContainer"></div>
+    
+    
+  <div style="display: none">  
+    <div id="fileTemplate">
+      <div>
+        <h2 class="fileName" onclick="showClass(event.target)"></h2>
+        <div class="fileContent" style="display: none">None</div>
+      </div>
+    </div>
+
+    <div id="classTemplate">
+    <div>
+    <div class="classParent"></div>
+    <div class="classDoc"></div>
+    <div class="classMethods"></div>
+    </div>
+    </div>
+
+    <div id="methodTemplate">
+    <div>
+    <div>
+      <span class="methodName"></span>(<span class="methodParams"></span>) -> <span class="methodReturn"></span>
+    </div>
+    <div class="methodDoc"></div>
+    </div>
+    </div>
+
+    <div id="paramTemplate">
+    <span>
+    <span class="paramName"></span>: <span class="paramType"></span><span class="paramOpt"></span>
+    </span>
+    </div>
+  </div>
+    
+    <script>
+    
+  let currentBranch = 'master';
+    
+  const container = document.getElementById('classContainer');
+  const fileTemplate = document.getElementById('fileTemplate').firstElementChild;
+  const classTemplate = document.getElementById('classTemplate').firstElementChild;
+  const methodTemplate = document.getElementById('methodTemplate').firstElementChild;
+  const paramTemplate = document.getElementById('paramTemplate').firstElementChild;
+  const commaItem = document.createElement('span')
+  commaItem.textContent=', ';
+    
+  const regexFile = new RegExp(String.raw`^(?:.+?\/\*\*\s*(.+?)\s*\*\/.*?|.+?)\n\s*?class KRITALIBKIS_EXPORT (\w+)\s*?[\:\n]\s*(?:public\s+|)(\w+|)`,'s');
+  const regexClass = new RegExp(String.raw`\n\s*?(public|private)\s*(Q_SLOTS|)\s*:\s*?\n(.+?)(\n\s*?(?:public|private)\s*(?:Q_SLOTS|)\s*:\s*?\n|\#endif \/\/ LIBKIS_)`,'s');
+
+  const regexParam = new RegExp(String.raw`(?:^|\s)(\S+?(?:\<.+?\>|))\s*[\&\*]*(\w+?)(?:\s*=\s*(.+?)|)\s*$`,'s');
+  
+  const regexDoc1 = new RegExp(String.raw`\s*(?:/\*\*|///)\s*\**`);
+  const regexDoc2 = new RegExp(String.raw`/\s*$`);
+  const regexDoc3 = new RegExp(String.raw`\n\s*?\* \@`,'g');
+  
+  const regexDocCode1 = new RegExp(String.raw`\n\s*?\* `,'g');
+  const regexDocCode2 = new RegExp(String.raw`\n\s*?\*`, 'g');
+  
+  const regexMethodParams1 = new RegExp(String.raw`\<(.*?),(.*?)\>',r'<\1&&\2>`);
+  const regexMethodParams2 = new RegExp(String.raw`\<(.*?)&&(.*?)\>`);
+  
+  const declareClass = {
+        'Document': 'Krita.instance().activeDocument()',
+        'Node': 'Krita.instance().activeDocument().activeNode()'
+  };
+  
+  const mapTypes = {
+        'QStringList': ['List[str]'],
+        'QString': ['str'],
+        'qreal': ['float'],
+        'double': ['float'],
+        'QByteArray': ['Union[QByteArray, bytes, bytearray]','QByteArray'],
+        'QList':['List'],
+        'QVector':['List'],
+        'QMap':['Dict'],
+        'true':['True'],
+        'false':['False'],
+        'void': ['None']
+  };
+  
+  let mapDict = {};
+  let classKeys = [];
+  
+  
+  function showKritaType(typeItem) {
+    let type = typeItem.textContent;
+
+    document.getElementById(type).getElementsByClassName('fileName')[0].click();
+
+  }
+  
+  function getDoc(docContent) {
+    docContent = docContent.replace(regexDoc1,'');
+    docContent = docContent.replace(regexDoc2,'');
+    docContent = docContent.replace(regexDoc3,String.raw`\n@`);
+    
+    const startCode = docContent.indexOf('@code');
+    
+    if (startCode > -1) {
+      const endCode = docContent.indexOf('@endcode', startCode)+8;
+      docCode = docContent.substring(startCode,endCode);
+      docCodeNew = '<span class="codeBox">'+docCode.replace(regexDocCode1,String.raw`\n`).replace('@code','').replace('@endcode','').replace(/</g,'&lt;')+'</span>';
+      
+      docContent = docContent.replace(docCode,docCodeNew);
+      
+    }
+    
+    docContent = docContent.replace(regexDocCode2,'');
+    docContent = docContent.replace(/\\n/g,'<br>')
+      
+    return docContent;
+  }
+  
+  fetch('https://invent.kde.org/api/v4/projects/graphics%2Fkrita/repository/tags')
+  .then(function (response) { return response.json() } )
+  .then(function (content) {
+
+  let select = document.getElementById('branch');
+  
+  content.unshift({ name:'master' });
+  
+  content.forEach(function (branch) {
+  let  opt = document.createElement('option');
+  opt.value = branch.name;
+  opt.textContent = branch.name;
+  select.appendChild(opt);
+  
+  });
+  
+  
+  });
+  
+  function setBranch(branch) {
+  console.log(branch);
+  
+      while (child = container.firstChild) {
+        container.removeChild(child);
+      }
+  currentBranch = branch;
+  
+  init();
+  
+  }
+  
+  
+  function convertType(vtype, param = true) {
+        const keys = Object.keys(mapTypes);
+
+        
+        for (let i = keys.length-1; i >= 0;i--) {
+          let k = keys[i];
+          let v = mapTypes[k];
+          let rv = param || v.length == 1 ? v[0]:v[1];
+          
+          if (k == vtype) {
+            return rv;
+          } else if (vtype.indexOf(k) > -1) {
+            vtype = vtype.replace(k, rv)
+          }
+        }
+  
+        
+        vtype = vtype.replace('<','[').replace('>',']').replace(' *','').replace('*','').replace('&','').replace('virtual ','').replace('static ','');;
+        
+        classKeys.sort().reverse().forEach(function (k) {
+          vtype = vtype.replace(new RegExp(String.raw`(^|[\[\( ,])`+k), "$1<span class='kritaType' onclick='showKritaType(this)'>"+k+"</span>");
+        });
+
+        
+        vtype = vtype.replace(/((?:Kis|Ko)\w+)/, '$1');
+        
+        return vtype;
+  }
+  
+  
+  function classList(callback) {
+   const url = 'https://invent.kde.org/api/v4/projects/graphics%2Fkrita/repository/files/libs%2Flibkis%2FCMakeLists.txt/raw?ref='+currentBranch;
+   
+  fetch(url)
+  .then(function (response) { return response.text() } )
+  .then(function (content) {
+  
+
+  
+    const regexp = new RegExp(String.raw`\s*(.+?)\.cpp`,'g');
+    let matchList=[];
+    let match;
+
+
+    while ((match = regexp.exec(content)) !== null) {
+      if (match[1] !== 'LibKisUtils') {
+        matchList.push(match[1]);
+      }
+    }
+    classKeys = matchList;
+    callback(matchList);
+  
+  
+  });
+  
+  }
+  
+  function classData(className, url, callback) {
+
+  fetch(url)
+  .then(function (response) { return response.text() } )
+  .then(function (content) {
+
+
+  
+    const regexMethod = new RegExp(String.raw`(?:.+?(?<doc>\/\*\*\s*.+?\s*\*\/|\/\/\/[^\r\n]+?)\s*?|\s*?)\n\s*?(?:(?<type>(?:virtual|static|)\s*?[\w\*]+(?:\<[\w \*,]+\>|))\s+(?<name>[\w\*]+)|(?<cname>`+className+String.raw`))\((?<params>[^\r\n]*)\)(?<extra>[^\r\n])*?;`,'s');
+  
+  const matchFile = content.match(regexFile);
+  content = content.replace(regexFile,'');
+  
+       
+  if (matchFile) {
+      const modName = matchFile[2];
+      let docContent = matchFile[1] ? matchFile[1]:'';
+      
+
+      mapDict[modName] = { 'doc': getDoc(docContent), 'methods':{}, 'declare':[], 'parent':matchFile[3]  };
+      let i = 0;
+      //mapDict[modName]['declare']={};
+      //console.log("cont1",content);
+      classLoop:
+      while (true) {
+        let matchClass = content.match(regexClass);
+        
+        if (matchClass) {
+          content =  content.replace(matchClass[0],matchClass[4]);
+          
+          const methodAccess = matchClass[1] + " " + matchClass[2];
+          let subcontent = matchClass[3];
+          
+          
+          
+          
+            methodLoop:
+            while (true) {
+            
+                const matchMethod = subcontent.match(regexMethod);
+                subcontent = subcontent.replace(regexMethod,'');
+                //console.log(subcontent, matchMethod);
+                
+                if (matchMethod) {
+              
+                  let docMethod = matchMethod.groups.doc ? matchMethod.groups.doc:'';
+                  docMethod = getDoc(docMethod);
+                  const methName = (matchMethod.groups.name ? matchMethod.groups.name:matchMethod.groups.cname).replace('*','');
+                  
+                  let params = [];
+                  
+                  let paramsText = matchMethod.groups.params;
+                  
+                  if (paramsText) {
+                    paramsText = paramsText.replace(regexMethodParams1,String.raw`<\1&&\2>`);
+                    
+                    paramsText.split(',').forEach(function (param) {
+
+                      
+                      const pmatch = param.match(regexParam);
+                      
+
+                      params.push({ 
+                          'type': (pmatch[1] ? pmatch[1]:'').replace(regexMethodParams2,String.raw`<\1,\2>`),
+                          'name': pmatch[2], 
+                          'optional': (pmatch[3] ? pmatch[3]:'').replace(regexMethodParams2,String.raw`<\1,\2>`) 
+                          });
+                      
+                      });
+                    
+
+                    
+                  
+                  }
+                  
+                if (methName == modName) {
+                                        mapDict[modName]['declare'].push({ 
+                                            'doc': docMethod, 
+                                            'return': matchMethod.groups.cname ? className:matchMethod.groups.type, 
+                                            'params': params, 
+                                            'access': methodAccess.trim() 
+                                            });
+                } else {
+                                        mapDict[modName]['methods'][methName]={
+                                            'name': methName,
+                                            'doc':docMethod, 
+                                            'return': matchMethod.groups.type.trim(), 
+                                            'params': params, 
+                                            'access': methodAccess.trim()
+                                            }
+                }
+                
+
+              } else {
+                break methodLoop;
+              }
+
+            }
+
+        } else {
+          break classLoop;
+        }
+
+      
+      }
+      
+      //console.log("cont",content);
+  
+  callback();
+  }
+
+
+   
+                                    
+  });
+     
+     
+     }
+     
+
+     
+     
+     function showClass(target) {
+     if (target.className != 'fileName') return;
+     fileItem = target.parentNode;
+     console.log(  fileItem.id );
+     
+     let fileContent = fileItem.getElementsByClassName('fileContent')[0];
+     fileContent.style.display='block';
+     
+     let child;
+     
+      while (child = fileContent.firstChild) {
+        fileContent.removeChild(child);
+      }
+      
+     
+      classData(fileItem.id,'https://invent.kde.org/api/v4/projects/graphics%2Fkrita/repository/files/libs%2Flibkis%2F'+fileItem.id+'.h/raw?ref='+currentBranch, function () {
+      
+        
+        
+        let classItem = classTemplate.cloneNode(true);
+        
+        classItem.getElementsByClassName('classDoc')[0].innerHTML = mapDict[fileItem.id].doc;
+        
+        if (mapDict[fileItem.id].parent !== '') classItem.getElementsByClassName('classParent')[0].innerHTML = 'Inherits from ' + convertType(mapDict[fileItem.id].parent);
+        
+        fileContent.appendChild(classItem);
+        
+        methodList = classItem.getElementsByClassName('classMethods')[0];
+          
+          
+          
+          //console.log('C', mapDict);
+          
+          let methods = mapDict[fileItem.id].methods;
+          
+          
+          Object.keys(methods).forEach(function (key) {
+            let methodItem = methodTemplate.cloneNode(true);
+            
+            methodItem.getElementsByClassName('methodName')[0].textContent = methods[key].name;
+            methodItem.getElementsByClassName('methodDoc')[0].innerHTML = methods[key].doc;
+            methodItem.getElementsByClassName('methodReturn')[0].innerHTML = convertType(methods[key].return,false) + (methods[key].return.indexOf('static') > -1 ? ' [static]':'') + (methods[key].access.indexOf('private') > -1 ? ' [private]':'');
+            paramList = methodItem.getElementsByClassName('methodParams')[0];
+            
+            let params = methods[key].params;
+            
+            
+            
+            params.forEach(function(param,i) {
+              let paramItem = paramTemplate.cloneNode(true);
+            
+              paramItem.getElementsByClassName('paramType')[0].innerHTML = convertType(param.type);
+              paramItem.getElementsByClassName('paramName')[0].textContent = param.name;
+              if (param.optional != '') {
+                paramItem.getElementsByClassName('paramOpt')[0].textContent = ' = '+ param.optional;
+              }
+              
+              if (i > 0) paramList.appendChild(commaItem.cloneNode(true)); 
+              paramList.appendChild(paramItem);
+              
+            });
+            
+            
+            methodList.appendChild(methodItem);
+            
+          });
+          
+          
+          window.location.hash= '#' + fileItem.id;
+          
+          });
+     
+     }
+     
+     
+     function init() {
+      classList(function (files) {
+        files.sort().forEach(function (file) {
+            let fileItem = fileTemplate.cloneNode(true);
+            fileItem.id = file;
+            fileItem.getElementsByClassName('fileName')[0].textContent = file;
+            
+            container.appendChild(fileItem);
+        });
+      });
+     }
+     
+     
+     init();
+     
+     
+    </script>
+    
+    </main>
+    <footer></footer>
+  </body>
+</html>
