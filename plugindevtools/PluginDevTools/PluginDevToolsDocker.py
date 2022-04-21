@@ -1959,8 +1959,15 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 
                 methName = str(meth.name(), 'utf-8')
                 
+                isSafe = True
+                
+                for i in range(0,meth.parameterCount()):
+                    print ( ptypes[i], b'Ko' in ptypes[i], b'*' in ptypes[i] )
+                    if b'Ko' in ptypes[i] and b'*' in ptypes[i]:
+                        isSafe = False
+                
             
-                methDoc = methName + "(" + str(b','.join( [ ptypes[i]+b" "+pnames[i] for i in range(0,meth.parameterCount()) ] ), 'utf-8') + ")"
+                methDoc = ('' if isSafe else '[UNSAFE]') + methName + "(" + str(b','.join( [ ptypes[i]+b" "+pnames[i] for i in range(0,meth.parameterCount()) ] ), 'utf-8') + ")"
 
                 methType = self.caller.METHOD_ACCESS[int(meth.access())] + " " + self.caller.METHOD_TYPES[int(meth.methodType())]
                 
@@ -1981,6 +1988,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                         'doc': methDoc,
                         'active':1,
                         'used':False,
+                        'safe':isSafe,
                         'code':'',
                         'item':[
                             QStandardItem( Krita.instance().icon('visible'), '' ),
@@ -2031,18 +2039,19 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     
                     
                 for methName in self.signalsDict['current']:
-                    #print ("MM", methName)
-                    #self.signalsDict['current'][methName]['obj'].pyqtConfigure(**{ methName: self.signalsDict['current'][methName]['method']})
-                    #QObject.connect(self.signalsDict['current'][methName]['obj'],QtCore.SIGNAL(self.signalsDict['current'][methName]['doc']),self.signalsDict['current'][methName]['method'])
-                    
-                    #look into this way
-                    #>>>>getattr(self.signalsDict['current'][methName]['obj'],methName)[**self.signalsDict['current'][methName]['params']].connect(self.signalsDict['current'][methName]['method'])
-                    
-                    meth = getattr(self.signalsDict['current'][methName]['obj'],methName)
-                    if isinstance(meth,type(pyqtBoundSignal())) or isinstance(meth,type(pyqtSignal())):
-                        meth.connect(self.signalsDict['current'][methName]['method'])
-                    else:
-                        self.signalsDict['current'][methName]['item'][0].setData(QBrush(Qt.darkRed), Qt.BackgroundRole)
+                    if self.signalsDict['current'][methName]['safe']:
+                        print ("MM", methName, self.signalsDict['current'][methName] )
+                        #self.signalsDict['current'][methName]['obj'].pyqtConfigure(**{ methName: self.signalsDict['current'][methName]['method']})
+                        #QObject.connect(self.signalsDict['current'][methName]['obj'],QtCore.SIGNAL(self.signalsDict['current'][methName]['doc']),self.signalsDict['current'][methName]['method'])
+                        
+                        #look into this way
+                        #>>>>getattr(self.signalsDict['current'][methName]['obj'],methName)[**self.signalsDict['current'][methName]['params']].connect(self.signalsDict['current'][methName]['method'])
+                        
+                        meth = getattr(self.signalsDict['current'][methName]['obj'],methName)
+                        if isinstance(meth,type(pyqtBoundSignal())) or isinstance(meth,type(pyqtSignal())):
+                            meth.connect(self.signalsDict['current'][methName]['method'])
+                        else:
+                            self.signalsDict['current'][methName]['item'][0].setData(QBrush(Qt.darkRed), Qt.BackgroundRole)
                     
                 
                 if self.centralWidget.eventFilterTypeCmb.currentIndex() == 0:
@@ -2062,7 +2071,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     
                     
                     for methName in self.signalsDict['current']:
-                        if not sip.isdeleted(self.signalsDict['current'][methName]['obj']):
+                        if self.signalsDict['current'][methName]['safe'] and not sip.isdeleted(self.signalsDict['current'][methName]['obj']):
                             meth = getattr(self.signalsDict['current'][methName]['obj'],methName)
                             if isinstance(meth,type(pyqtBoundSignal())) or isinstance(meth,type(pyqtSignal())):
                                 meth.disconnect(self.signalsDict['current'][methName]['method'])
