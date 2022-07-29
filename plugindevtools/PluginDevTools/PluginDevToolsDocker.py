@@ -280,8 +280,11 @@ class PluginDevToolsDocker(DockWidget):
                             imethodItem = iclassItem.child(iclassItem.rowCount() - 1)
                             imethodItem.setData( self.formatDoc(prop2['doc']), 101 )
             
+            self.caller.centralWidget.kritaapiDownload.disconnect()
             self.caller.centralWidget.kritaapiDownload.clicked.connect(self.downloadKritaAPI)
+            self.caller.centralWidget.kritaapiGenAutoComplete.disconnect()
             self.caller.centralWidget.kritaapiGenAutoComplete.clicked.connect(self.exportKritaAPI)
+            self.caller.centralWidget.kritaapiFilter.disconnect()
             self.caller.centralWidget.kritaapiFilter.textChanged.connect(self.searchTreeFilter)
             self.kritaapiTreeView.expandAll()   
     
