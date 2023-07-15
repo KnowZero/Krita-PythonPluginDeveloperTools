@@ -431,7 +431,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                             else:
                                 propName[0] = re.sub(
                                     r"\((.+)\)", 
-                                    lambda s: "(" + ', '.join( [  metaDict2['methods'][key]['pnames'][i] + ': ' + v  for i, v in enumerate(s.group(1).split(', ')) ]  ) + ")", 
+                                    lambda s: "(" + ', '.join( [  metaDict2['methods'][key]['pnames'][i] + ': ' + v  for i, v in enumerate(s.group(1).split(', ')) if i < len(metaDict2['methods'][key]['pnames']) ]  ) + ")", 
                                     propName[0]
                                 )
                             if 'Private' in metaDict2['methods'][key]['rec'][1]:
