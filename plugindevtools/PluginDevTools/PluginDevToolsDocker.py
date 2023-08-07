@@ -168,8 +168,12 @@ class PluginDevToolsDocker(DockWidget):
         def fillItems(self):
             
             ver = (Krita.instance().version().split('-'))[0]
-            
-            if os.path.exists( os.path.dirname(os.path.realpath(__file__)) + '.KritaAPI.'+ver+'.zip' ):
+            respath = Krita.instance().readSetting('','ResourceDirectory','')
+            if respath == '':
+                respath = os.path.dirname(os.path.realpath(__file__))
+            else:
+                respath=os.path.join(respath,'pykrita','PluginDevTools')
+            if os.path.exists( respath + '.KritaAPI.'+ver+'.zip' ):
                 getAPI = GetKritaAPI()
 
                 self.caller.kritaAPI[ver] = getAPI.parseData(ver)
@@ -304,6 +308,11 @@ class PluginDevToolsDocker(DockWidget):
         
         def downloadKritaAPI(self):
             ver = (Krita.instance().version().split('-'))[0]
+            respath = Krita.instance().readSetting('','ResourceDirectory','')
+            if respath == '':
+                respath = os.path.dirname(os.path.realpath(__file__))
+            else:
+                respath=os.path.join(respath,'pykrita','PluginDevTools')
             msgbox = QMessageBox(QMessageBox.Question,'Would you like to download the API details automatically?', 
                                        '', QMessageBox.Yes | QMessageBox.No)
             msgbox.setTextFormat(Qt.RichText)
@@ -317,7 +326,7 @@ You can also do this manually by downloading the following (Unless you are on Kr
 <u>https://invent.kde.org/graphics/krita/-/archive/master/krita-master.zip?path=libs/libkis</u>
 <br>
 And place it in:<br>
-<u>""" + os.path.dirname(os.path.realpath(__file__)) + """.KritaAPI."""+ver+""".zip</u>
+<u>""" + respath + """.KritaAPI."""+ver+""".zip</u>
 <hr>
 This only needs to be done once per new version of Krita. Do note that Krita may freeze up for about a minute.
 <hr>
@@ -538,8 +547,12 @@ Would you like to download the API details(less than 200kb of data) automaticall
         def __init__(self, caller):
             super().__init__()
             self.caller = caller
-            
-            self.tempFilePath = os.path.dirname(os.path.realpath(__file__)) + ".console.temp.py"
+            respath = Krita.instance().readSetting('','ResourceDirectory','')
+            if respath == '':
+                respath = os.path.dirname(os.path.realpath(__file__))
+            else:
+                respath=os.path.join(respath,'pykrita','PluginDevTools')
+            self.tempFilePath = respath + ".console.temp.py"
             self.watcher = None
             self.currentExecuteKey = self.EXECUTE_KEYS[0]
             
