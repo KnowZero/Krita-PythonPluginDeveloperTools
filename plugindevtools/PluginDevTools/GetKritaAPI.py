@@ -83,7 +83,12 @@ class GetKritaAPI(QObject):
                         data = source.read()
                         with zipfile.ZipFile(io.BytesIO(data)) as myzip:
                             if 'krita-'+tag+'-libs-libkis/libs/libkis/Window.h' in myzip.namelist():
-                                with open( os.path.dirname(os.path.realpath(__file__)) + '.KritaAPI.'+kritaVersion+'.zip', 'wb') as f:
+                                respath = Krita.instance().readSetting('','ResourceDirectory','')
+                                if respath == '':
+                                    respath = os.path.dirname(os.path.realpath(__file__))
+                                else:
+                                    respath+='/pykrita/PluginDevTools'
+                                with open( respath + '.KritaAPI.'+kritaVersion+'.zip', 'wb') as f:
                                     f.write(data)
                                     f.close()
                                     return { 'status': 1, 'data': { 'updated': date } }
@@ -100,8 +105,12 @@ class GetKritaAPI(QObject):
     
     def parseData(self, kritaVersion):
         mapDict = {}
-
-        with zipfile.ZipFile( os.path.dirname(os.path.realpath(__file__)) + '.KritaAPI.'+kritaVersion+'.zip' ) as myzip:
+        respath = Krita.instance().readSetting('','ResourceDirectory','')
+        if respath == '':
+            respath = os.path.dirname(os.path.realpath(__file__))
+        else:
+            respath+='/pykrita/PluginDevTools'
+        with zipfile.ZipFile( respath + '.KritaAPI.'+kritaVersion+'.zip' ) as myzip:
             for fn in myzip.namelist():
                 if fn.endswith('.h') and '/Test/' not in fn:
                     content = str(myzip.read(fn),'utf-8')
