@@ -87,7 +87,7 @@ class GetKritaAPI(QObject):
                                 if respath == '':
                                     respath = os.path.dirname(os.path.realpath(__file__))
                                 else:
-                                    respath+='/pykrita/PluginDevTools'
+                                    respath=os.path.join(respath,'pykrita','PluginDevTools')
                                 with open( respath + '.KritaAPI.'+kritaVersion+'.zip', 'wb') as f:
                                     f.write(data)
                                     f.close()
@@ -109,7 +109,7 @@ class GetKritaAPI(QObject):
         if respath == '':
             respath = os.path.dirname(os.path.realpath(__file__))
         else:
-            respath+='/pykrita/PluginDevTools'
+            respath=os.path.join(respath,'pykrita','PluginDevTools')
         with zipfile.ZipFile( respath + '.KritaAPI.'+kritaVersion+'.zip' ) as myzip:
             for fn in myzip.namelist():
                 if fn.endswith('.h') and '/Test/' not in fn:
