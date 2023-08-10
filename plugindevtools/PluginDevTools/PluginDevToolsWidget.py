@@ -83,10 +83,6 @@ class PluginDevToolsWidget(QWidget):
         self.t[self.currentTab].selected()
 
 
-    def canvasChanged(self, canvas):
-        pass
-
-
     class PluginDevToolsWelcome():
         def __init__(self, caller):
             super().__init__()
