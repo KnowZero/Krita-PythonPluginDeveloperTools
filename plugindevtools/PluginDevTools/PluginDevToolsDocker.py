@@ -15,8 +15,8 @@ class PluginDevToolsDocker(DockWidget):
         pass
         
     def showEvent(self, event: QtGui.QShowEvent) -> None:
-        print('PluginDevToolsDocker showEvent')
-        print('    sender= ', self.sender())
+        #print('PluginDevToolsDocker showEvent')
+        #print('    sender= ', self.sender())
         if isinstance(self.sender(), QAction):
             self.signal_manualOpenDocker.emit()
             return super().showEvent(event)
