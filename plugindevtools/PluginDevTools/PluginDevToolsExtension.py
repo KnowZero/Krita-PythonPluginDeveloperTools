@@ -1,29 +1,64 @@
 from krita import *
-from PyQt5.QtWidgets import QDialog, QHBoxLayout
-from .PluginDevToolsWidget import *
 
-class PluginDevToolsExtension(Extension):
+## TODO: Planed to add some functions in future.
+
+#class PluginDevToolsExtension(Extension):
+#    def __init__(self, parent):
+#        super().__init__(parent) 
+#
+#    # Krita.instance() exists, so do any setup work
+#    def setup(self):
+#        pass
+#
+#    # called after setup(self)
+#    def createActions(self, window):
+#        pass
+
+
+# This is a test extension
+import inspect
+class PluginDevToolsTestExtension(Extension):
     def __init__(self, parent):
-        super().__init__(parent) 
-
+        super().__init__(parent)
 
     def setup(self):
         pass
 
-    def initialize(self):
-        self.dialog = QDialog()
+    def createActions(self, window: Window):
+        action = window.createAction('PluginDevTools', 'PluginDevTools', 'tools/scripts/PluginDevTools')
+        self.menu = QMenu('PluginDevTools', window.qwindow())
+        action.setMenu(self.menu)
+        # Add some fixed Action here:
+        #action = window.createAction('actionID', 'actionDisplayName', 'tools/scripts/PluginDevTools')
+        #self.menu.addAction(action)
+        #action.triggered.connect(someConnectObject)
 
-        self.dialogLayout = QHBoxLayout()
-        self.dialog.setLayout(self.dialogLayout)
 
-        self.dialogLayoutContent = PluginDevToolsWidget()
-        self.dialogLayout.addWidget(self.dialogLayoutContent)
+    def dynamicAddEntry(self, *args):
+        # Only for debug
+        # How to use in console:
+        #debugentry = next((w for w in Krita.instance().extensions() if str(type(w)).__contains__('PluginDevToolsDebugEntry')), None)
+        #print(vars(debugentry))
+        # then use debugentry.yourVariable to access yourVariable
+        frame = inspect.currentframe()
+        frame = inspect.getouterframes(frame)[1]
+        string = inspect.getframeinfo(frame[0]).code_context
+        if string is not None:
+            string = string[0].strip()
+        else:
+            return
 
-        self.dialog.setWindowTitle('Plugin Developer Tools')
-        self.dialog.show()
+        args_name = string[string.find('(') + 1:-1].replace(' ', '').split(',')
+    
+        for name, value in zip(args_name, args):
+            setattr(self, name, value)
 
-    def createActions(self, window):
-        action = window.createAction("pluginDevTools", "Plugin Developer Tools", "tools/scripts")
-        action.triggered.connect(self.initialize)
+    def dynamicCreateAction(self, connectObject, window: Window, id_text: str, displayName: str = str(), addToMenu=False) ->QAction:
+        action = window.createAction(id_text, displayName)
+        action.triggered.connect(connectObject)
+        if addToMenu:
+            self.menu.addAction(action)
+
+        return action
 
 

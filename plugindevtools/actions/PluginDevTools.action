@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ActionCollection version="2" name="Scripts">
+    <Actions category="Scripts">
+        <text>PluginDevTools</text>
+
+        <Action name="PluginDevToolsToggleOnOff">
+        <icon></icon>
+        <text>Toggle On or Off</text>
+        <whatsThis></whatsThis>
+        <toolTip></toolTip>
+        <iconText></iconText>
+        <activationFlags>10000</activationFlags>
+        <activationConditions>0</activationConditions>
+        <shortcut>f12</shortcut>
+        <isCheckable>false</isCheckable>
+        <statusTip></statusTip>
+        </Action>
+    </Actions>
+</ActionCollection>
+
+<!-----
+    user guide:
+        https://docs.krita.org/en/user_manual/python_scripting/krita_python_plugin_howto.html
+    save this file in below location:
+        Windows: C:\Users\%USERNAME%\AppData\Roaming\krita\actions\
+        Linux: $HOME/.local/share/krita/actions/
+----->
