@@ -49,19 +49,13 @@ def setup():
     statusManager.setDocker(docker)
     
     # Prepare a standalone window
-    dialog = PluginDevToolsDialog()
+    dialog = PluginDevToolsDialog(qwin)
     statusManager.setDialog(dialog)
     
     # Prepare content widget. This widget will be added into docker or dialog. Only keep one instance.
     centralwidget = PluginDevToolsWidget()
     statusManager.setCentralWidget(centralwidget)
     
-    # Set dialog's parent to qwindow, when close qwindow, dialog will be closed as well
-    statusManager.dialog.setParent(qwin)
-    # Reset windowflag to keep as a standalone window
-    # Should always reset windowflag after setParent
-    statusManager.dialog.setWindowFlag(Qt.WindowType.Window, True)
-
     statusManager.setFirstAfterStart()
 
     # Status route: modeAllHide <--> modeDocker <--> modeDialog

@@ -80,7 +80,7 @@ class PluginDevToolsStatusManager():
             return
         self.docker.setFloating(False)
         self.docker.close()
-        self.dialog.layout().addWidget(self.centralwidget)
+        self.dialog.setCentralWidget(self.centralwidget)
         self.dialog.show()
         self.dialog.activateWindow()
         type(self).mutex.unlock()
