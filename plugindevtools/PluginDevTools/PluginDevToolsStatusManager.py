@@ -83,6 +83,10 @@ class PluginDevToolsStatusManager():
         self.dialog.setCentralWidget(self.centralwidget)
         self.dialog.show()
         self.dialog.activateWindow()
+        newWidth = self.dialog.size().width()
+        newPoint = QCursor.pos()
+        newPoint.setX(newPoint.x()-int(newWidth/2))
+        self.dialog.move(self.dialog.mapFrom(self.dialog, newPoint))
         type(self).mutex.unlock()
 
 
