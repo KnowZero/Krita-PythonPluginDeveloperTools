@@ -1042,7 +1042,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 parent = obj.parent()
 
         def setCurrentSelector(self, obj, localCall = True):
-            if obj and not sip.isdeleted(obj) and obj is not self.currentWidget and self.findAncestor(self.currentWindow,obj):
+            if obj and not sip.isdeleted(obj) and obj is not self.currentWidget and self.findAncestor(self.currentWindow,obj) and self.selectorWidget:
                 self.selectorWidget.setVisible(True)
 
                 if self.useStyleSheet:
@@ -1085,20 +1085,22 @@ Would you like to download the API details(less than 200kb of data) automaticall
             def eventFilter(self, obj, event):
                 etype = event.type()
 
-                if etype == 129 or (etype == 6 and event.key() == self.caller.modKey[1]):
-                    if etype == 6 and event.key() == self.caller.modKey[1]:
+                if etype == QEvent.HoverMove or (etype == QEvent.KeyPress and event.key() == self.caller.modKey[1]):
+                    if etype == QEvent.KeyPress and event.key() == self.caller.modKey[1]:
                         win = QtWidgets.qApp.activeWindow()
                         self.caller.selectorWidget=win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindDirectChildrenOnly)
 
                     if QApplication.keyboardModifiers() == self.caller.modKey[0]:
+                        win = QtWidgets.qApp.activeWindow()
+                        if win.__class__.__name__ == 'PluginDevToolsDialog':
+                                win.parentWidget().activateWindow()
                         pos = QCursor.pos()
                         onWidget = QApplication.widgetAt(pos)
                         self.caller.setCurrentSelector(onWidget)
-                elif etype == 7 and event.key() == self.caller.modKey[1] and self.caller.currentWidget:
+                elif etype == QEvent.KeyRelease and event.key() == self.caller.modKey[1] and self.caller.currentWidget:
                         self.caller.finishedSampling()
 
 
-                #print (obj, event.type())
                 return False
 
 
