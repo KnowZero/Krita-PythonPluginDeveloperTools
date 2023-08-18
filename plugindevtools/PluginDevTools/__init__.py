@@ -1,9 +1,7 @@
 from krita import *
-from .PluginDevToolsExtension import * 
-from .PluginDevToolsDocker import * 
 from .PluginDevToolsWidget import *
-from .PluginDevToolsDialog import *
-from .PluginDevToolsStatusManager import *
+from .PluginDevToolsDocker import * 
+from .PluginDevToolsExtension import *
 
 
 app = Krita.instance()
@@ -20,8 +18,6 @@ app.addExtension(testExtension)
 DOCKER_ID = 'pluginDevToolsDocker'
 dock_widget_factory = DockWidgetFactory(DOCKER_ID, DockWidgetFactoryBase.DockBottom, PluginDevToolsDocker)
 app.addDockWidgetFactory(dock_widget_factory)
-
-statusManager = PluginDevToolsStatusManager('statusManager')
 
 def retrieveDocker(docker_id: str)->PluginDevToolsDocker:
     # Only retrieve docker instance after the main window was completely created
@@ -40,41 +36,24 @@ def retrieveDocker(docker_id: str)->PluginDevToolsDocker:
 
 
 def setup():
-    global statusManager
 
     qwin = Krita.instance().activeWindow().qwindow()
 
-
     docker = retrieveDocker(DOCKER_ID)
-    statusManager.setDocker(docker)
     
-    # Prepare a standalone window
-    dialog = PluginDevToolsDialog(qwin)
-    statusManager.setDialog(dialog)
-    
-    # Prepare content widget. This widget will be added into docker or dialog. Only keep one instance.
-    centralwidget = PluginDevToolsWidget()
-    statusManager.setCentralWidget(centralwidget)
-    
-    statusManager.setFirstAfterStart()
-
-    # Status route: modeAllHide <--> modeDocker <--> modeDialog
-    statusManager.dialog.signal_closed.connect(lambda : statusManager.applyDockerMode('dialog.signal_closed'))
-    statusManager.docker.signal_leaveFloating.connect(lambda : statusManager.applyDialogMode('docker.signal_leaveFloating'))
-    statusManager.docker.signal_manualOpenDocker.connect(lambda : statusManager.applyDockerMode('docker.signal_manualOpenDocker'))
-
+    docker.setFirstAfterStart()
 
     # Only for debug
-    testExtension.dynamicAddEntry(DOCKER_ID, dock_widget_factory, centralwidget, dialog, docker, statusManager)
+    testExtension.dynamicAddEntry(DOCKER_ID, dock_widget_factory, docker)
 
     # Dynamically load some object into actions menu
-    testExtension.dynamicCreateAction(statusManager.applyDockerMode, Krita.instance().activeWindow(), 'PluginDevToolsActionOpenAsDocker', 'Open as Docker', True)
-    testExtension.dynamicCreateAction(statusManager.applyDialogMode, Krita.instance().activeWindow(), 'PluginDevToolsActionOpenAsDialog', 'Open as Dialog', True)
+    testExtension.dynamicCreateAction(docker.applyDockerMode, Krita.instance().activeWindow(), 'PluginDevToolsActionOpenAsDocker', 'Open as Docker', True)
+    testExtension.dynamicCreateAction(docker.applyDialogMode, Krita.instance().activeWindow(), 'PluginDevToolsActionOpenAsDialog', 'Open as Dialog', True)
     def toggleOnAndOff():
-        if statusManager.docker.isVisible():
-            statusManager.applyHideMode()
+        if docker.isVisible():
+            docker.applyHideMode()
         else:
-            statusManager.applyDockerMode()
+            docker.applyDockerMode()
     testExtension.dynamicCreateAction(toggleOnAndOff, Krita.instance().activeWindow(), 'PluginDevToolsToggleOnOff', 'Toggle On or Off')
 
 
@@ -84,6 +63,5 @@ def setup():
 appNotifier = Krita.instance().notifier()
 appNotifier.setActive(True)
 appNotifier.windowCreated.connect(setup)
-#appNotifier.applicationClosing.connect(statusManager.saveLastBeforeExit)
 
 
