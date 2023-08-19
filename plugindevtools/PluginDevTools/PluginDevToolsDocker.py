@@ -32,7 +32,6 @@ class PluginDevToolsDocker(DockWidget):
         super().__init__()
         self.setWindowTitle(DOCKER_TITLE)
         self.titleBarEventListening = False
-        self.installEventFilter(self)
         # Prepare a standalone window
         self.floatModeDialog = PluginDevToolsDialog(self.parent())
         # Prepare content widget. This widget will be added into docker itself or self.floatModeDialog. Only keep one instance.
