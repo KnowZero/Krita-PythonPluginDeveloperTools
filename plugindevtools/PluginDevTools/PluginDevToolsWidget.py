@@ -1264,7 +1264,10 @@ Would you like to download the API details(less than 200kb of data) automaticall
         def showCurrentWidget(self, toggle, switchTab = False):
             if toggle:
                 self.showCurrentWidgetHighlight = True
-                self.caller.t['selector'].currentWindow = win = QtWidgets.qApp.activeWindow()
+                win = QtWidgets.qApp.activeWindow()
+                if win.__class__.__name__ == 'PluginDevToolsDialog':
+                    win = win.parentWidget()
+                self.caller.t['selector'].currentWindow = win
                 self.caller.t['selector'].selectorWidget=win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindDirectChildrenOnly)
                 self.caller.t['selector'].setCurrentSelector(self.currentWidget, False)
             else:
