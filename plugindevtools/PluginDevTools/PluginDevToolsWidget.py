@@ -1011,7 +1011,8 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     QtWidgets.qApp.installEventFilter(self.windowFilter)
                 #??self.currentWindow.removeEventFilter(self.windowFilter)
                 self.currentWindow = None
-            self.selectorWidget.setVisible(False)
+            if self.selectorWidget:
+                self.selectorWidget.setVisible(False)
 
             if self.currentWidget:
                 if self.useStyleSheet:
