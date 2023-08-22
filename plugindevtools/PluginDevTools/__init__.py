@@ -2,7 +2,7 @@ from krita import *
 from .PluginDevToolsWidget import *
 from .PluginDevToolsDocker import * 
 from .PluginDevToolsExtension import *
-
+from .PluginGenerator import *
 
 app = Krita.instance()
 
@@ -34,6 +34,11 @@ def retrieveDocker(docker_id: str)->PluginDevToolsDocker:
     print("cannot find docker: {docker_id}")
     exit(1)
 
+def registerPluginGenerator():
+    docker = retrieveDocker(DOCKER_ID)
+    pluginGen = PluginGeneratorDialog()
+    pluginGen.exec()
+
 
 def setup():
 
@@ -49,6 +54,9 @@ def setup():
     # Dynamically load some object into actions menu
     testExtension.dynamicCreateAction(docker.applyDockerMode, Krita.instance().activeWindow(), 'PluginDevToolsActionOpenAsDocker', 'Open as Docker', True)
     testExtension.dynamicCreateAction(docker.applyDialogMode, Krita.instance().activeWindow(), 'PluginDevToolsActionOpenAsDialog', 'Open as Dialog', True)
+    
+    testExtension.dynamicCreateAction(registerPluginGenerator, Krita.instance().activeWindow(), 'PluginDevToolsActionPluginGen', 'Create your own new plugin generator...', True)
+    
     def toggleOnAndOff():
         if docker.isVisible():
             docker.applyHideMode()

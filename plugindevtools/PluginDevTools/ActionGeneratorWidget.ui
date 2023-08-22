@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ActionGeneratorWidget</class>
+ <widget class="QWidget" name="ActionGeneratorWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>842</width>
+    <height>657</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Action Shortcuts:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="4,9">
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QListView" name="listView"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="newBtn">
+         <property name="text">
+          <string>New</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="deleteBtn">
+         <property name="text">
+          <string>Delete</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QFormLayout" name="formLayout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="categoryLabel_2">
+         <property name="text">
+          <string>Category</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="categoryLineEdit">
+         <property name="statusTip">
+          <string>category</string>
+         </property>
+         <property name="text">
+          <string>Scripts</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="categoryLabel">
+         <property name="toolTip">
+          <string>This will create a sub-category under scripts named after the category to add your shortcuts to.</string>
+         </property>
+         <property name="text">
+          <string>Category Text</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="categoryTextEdit">
+         <property name="toolTip">
+          <string>This will create a sub-category under scripts named after the category to add your shortcuts to.</string>
+         </property>
+         <property name="statusTip">
+          <string>categoryText</string>
+         </property>
+         <property name="text">
+          <string>My Scripts</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="nameLabel">
+         <property name="toolTip">
+          <string>This should be the unique ID you made for your action when creating it in the setup of the extension.</string>
+         </property>
+         <property name="text">
+          <string>Unique ID</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="nameEdit">
+         <property name="toolTip">
+          <string>This should be the unique ID you made for your action when creating it in the setup of the extension.</string>
+         </property>
+         <property name="statusTip">
+          <string>action.name</string>
+         </property>
+         <property name="text">
+          <string>myAction</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="textLabel">
+         <property name="toolTip">
+          <string>The text that it will show in the shortcut editor.</string>
+         </property>
+         <property name="text">
+          <string>Shortcut Editor Text</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QLineEdit" name="textEdit">
+         <property name="toolTip">
+          <string>The text that it will show in the shortcut editor.</string>
+         </property>
+         <property name="statusTip">
+          <string>action.text</string>
+         </property>
+         <property name="text">
+          <string>My Script</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="toolTipLabel">
+         <property name="toolTip">
+          <string>The tool tip, this will show up on hover-over.</string>
+         </property>
+         <property name="text">
+          <string>Tool Tip</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QLineEdit" name="toolTipEdit">
+         <property name="toolTip">
+          <string>The tool tip, this will show up on hover-over.</string>
+         </property>
+         <property name="statusTip">
+          <string>action.toolTip</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="statusTipLabel">
+         <property name="toolTip">
+          <string>The status tip that is displayed on a status bar.</string>
+         </property>
+         <property name="text">
+          <string>Status Tip</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <widget class="QLineEdit" name="statusTipEdit">
+         <property name="toolTip">
+          <string>The status tip that is displayed on a status bar.</string>
+         </property>
+         <property name="statusTip">
+          <string>action.statusTip</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="whatSThisLabel">
+         <property name="toolTip">
+          <string>The text it will show when a Qt application specifically calls for ‘what is this’, which is a help action.</string>
+         </property>
+         <property name="text">
+          <string>What's This</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QLineEdit" name="whatSThisEdit">
+         <property name="toolTip">
+          <string>The text it will show when a Qt application specifically calls for ‘what is this’, which is a help action.</string>
+         </property>
+         <property name="statusTip">
+          <string>action.whatsThis</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLabel" name="activationFlagsLabel">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This determines when an action is disabled or not.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC41&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;   enum ActivationFlag {&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC42&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       NONE                        = 0x0000, ///&amp;lt; Always activate&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC43&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_IMAGE                = 0x0001, ///&amp;lt; Activate if there is at least one image&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC44&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       MULTIPLE_IMAGES             = 0x0002, ///&amp;lt; Activate if there is more than one image open&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC45&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       CURRENT_IMAGE_MODIFIED      = 0x0004, ///&amp;lt; Activate if the current image is modified&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC46&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_NODE                 = 0x0008, ///&amp;lt; Activate if there's an active node (layer or mask)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC47&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_DEVICE               = 0x0010, ///&amp;lt; Activate if the active node has a paint device, i.e. there are pixels to be modified&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC48&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_LAYER                = 0x0020, ///&amp;lt; Activate if the current node is a layer (vector or pixel)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC49&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_TRANSPARENCY_MASK    = 0x0040, ///&amp;lt; Activate if the current node is a transparency mask&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC50&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_SHAPE_LAYER          = 0x0080, ///&amp;lt; Activate if the current node is a vector layer&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC51&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       PIXELS_SELECTED             = 0x0100, ///&amp;lt; Activate if any pixels are selected (with any kind of selection)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC52&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       SHAPES_SELECTED             = 0x0200, ///&amp;lt; Activate if any vector shape is selected&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC53&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ANY_SELECTION_WITH_PIXELS   = 0x0400, ///&amp;lt; ???&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC54&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       PIXELS_IN_CLIPBOARD         = 0x0800, ///&amp;lt; Activate if the clipboard contains pixels&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC55&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       SHAPES_IN_CLIPBOARD         = 0x1000, ///&amp;lt; Activate if the clipboard contains vector data&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC56&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       NEVER_ACTIVATE              = 0x2000, ///&amp;lt; ???&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC57&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       LAYERS_IN_CLIPBOARD         = 0x4000, ///&amp;lt; ???&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC58&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       IMAGE_HAS_ANIMATION         = 0x8000, ///&amp;lt; Activate if the image has an animation&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC59&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       SHAPE_SELECTION_WITH_SHAPES = 0x10000, ///&amp;lt; Activate there is a vector selection active&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC60&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       PIXEL_SELECTION_WITH_PIXELS = 0x20000, ///&amp;lt; Activate there is a raster selection active&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC61&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;   };&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Activation Flags</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1">
+        <widget class="QLineEdit" name="activationFlagsEdit">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This determines when an action is disabled or not.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC41&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;enum ActivationFlag {&lt;/span&gt;&lt;/p&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC42&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       NONE                        &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;= 0x0000, ///&amp;lt; Always activate&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC43&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_IMAGE                = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x0001, ///&amp;lt; Activate if there is at least one image&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC44&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       MULTIPLE_IMAGES             = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x0002, ///&amp;lt; Activate if there is more than one image open&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC45&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       CURRENT_IMAGE_MODIFIED      = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x0004, ///&amp;lt; Activate if the current image is modified&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC46&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_NODE                 = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x0008, ///&amp;lt; Activate if there's an active node (layer or mask)&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC47&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_DEVICE               = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x0010, ///&amp;lt; Activate if the active node has a paint device, i.e. there are pixels to be modified&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC48&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_LAYER                = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x0020, ///&amp;lt; Activate if the current node is a layer (vector or pixel)&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC49&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_TRANSPARENCY_MASK    = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x0040, ///&amp;lt; Activate if the current node is a transparency mask&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC50&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_SHAPE_LAYER          = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x0080, ///&amp;lt; Activate if the current node is a vector layer&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC51&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       PIXELS_SELECTED             = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x0100, ///&amp;lt; Activate if any pixels are selected (with any kind of selection)&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC52&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       SHAPES_SELECTED             = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x0200, ///&amp;lt; Activate if any vector shape is selected&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC53&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ANY_SELECTION_WITH_PIXELS   = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x0400, ///&amp;lt; ???&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC54&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       PIXELS_IN_CLIPBOARD         = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x0800, ///&amp;lt; Activate if the clipboard contains pixels&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC55&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       SHAPES_IN_CLIPBOARD         = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x1000, ///&amp;lt; Activate if the clipboard contains vector data&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC56&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       NEVER_ACTIVATE              = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x2000, ///&amp;lt; ???&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC57&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       LAYERS_IN_CLIPBOARD         = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x4000, ///&amp;lt; ???&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC58&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       IMAGE_HAS_ANIMATION         = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x8000, ///&amp;lt; Activate if the image has an animation&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC59&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       SHAPE_SELECTION_WITH_SHAPES = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x10000, ///&amp;lt; Activate there is a vector selection active&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC60&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       PIXEL_SELECTION_WITH_PIXELS = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x20000, ///&amp;lt; Activate there is a raster selection active&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC61&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;   };&lt;/span&gt;&lt;/pre&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="statusTip">
+          <string>action.activationFlags</string>
+         </property>
+         <property name="text">
+          <string>10000</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0">
+        <widget class="QLabel" name="activationConditionsLabel">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This determines activation conditions (e.g. activate only when selection is editable)&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC64&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;   enum ActivationCondition {&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC65&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       NO_CONDITION = 0,&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC66&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_NODE_EDITABLE = 0x1,&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC67&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_NODE_EDITABLE_PAINT_DEVICE = 0x2,&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC68&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       SELECTION_EDITABLE = 0x4,&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC69&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       OPENGL_ENABLED = 0x8,&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC70&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;   };&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Activation Conditions</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="1">
+        <widget class="QLineEdit" name="activationConditionsEdit">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This determines activation conditions (e.g. activate only when selection is editable)&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;a name=&quot;LC64&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;enum ActivationCondition {&lt;/span&gt;&lt;/p&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC65&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       NO_CONDITION &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;= 0,&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC66&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_NODE_EDITABLE = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x1,&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC67&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       ACTIVE_NODE_EDITABLE_PAINT_DEVICE = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x2,&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC68&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       SELECTION_EDITABLE = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x4,&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC69&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;       OPENGL_ENABLED = &lt;/span&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;0x8,&lt;/span&gt;&lt;/pre&gt;&lt;pre style=&quot; margin-top:0px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;LC70&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;/&gt;&lt;span style=&quot; font-family:'Hack';&quot;&gt;   };&lt;/span&gt;&lt;/pre&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="statusTip">
+          <string>action.activationConditions</string>
+         </property>
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="0">
+        <widget class="QLabel" name="checkableLabel">
+         <property name="toolTip">
+          <string>Whether it is a checkbox or not.</string>
+         </property>
+         <property name="text">
+          <string>Checkable</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="1">
+        <widget class="QCheckBox" name="checkableChk">
+         <property name="toolTip">
+          <string>Whether it is a checkbox or not.</string>
+         </property>
+         <property name="statusTip">
+          <string>action.isCheckable</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0">
+        <widget class="QLabel" name="shortcutLabel">
+         <property name="text">
+          <string>Shortcut</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="1">
+        <widget class="QKeySequenceEdit" name="ShortcutKey">
+         <property name="statusTip">
+          <string>action.shortcut</string>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="0">
+        <widget class="QLabel" name="iconTextLabel">
+         <property name="toolTip">
+          <string>The text it will show when displayed in a toolbar. So for example, “Resize Image to New Size” could be shortened to “Resize Image” to save space, so we’d put that in here.</string>
+         </property>
+         <property name="text">
+          <string>Icon Text</string>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="1">
+        <widget class="QLineEdit" name="iconTextEdit">
+         <property name="toolTip">
+          <string>The text it will show when displayed in a toolbar. So for example, “Resize Image to New Size” could be shortened to “Resize Image” to save space, so we’d put that in here.</string>
+         </property>
+         <property name="statusTip">
+          <string>action.iconText</string>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="0">
+        <widget class="QLabel" name="iconLabel">
+         <property name="toolTip">
+          <string>The name of a possible icon. These will only show up on KDE plasma, because Gnome and Windows users complained they look ugly.</string>
+         </property>
+         <property name="text">
+          <string>Icon</string>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="1">
+        <widget class="QPushButton" name="saveBtn">
+         <property name="text">
+          <string>Save</string>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="1">
+        <widget class="QLineEdit" name="iconEdit"/>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QPushButton" name="doneBtn">
+     <property name="text">
+      <string>Done</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

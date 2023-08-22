@@ -1,0 +1,2 @@
+from .'''[%SHORTNAME%]''' import *
+ 

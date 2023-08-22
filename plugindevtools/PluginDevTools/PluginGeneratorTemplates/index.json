@@ -1,0 +1,8 @@
+[
+{"name":"Blank Docker","text":"A blank docker template (use this if your extension is centered around a docker)"},
+{"name":"Blank Extension","text":"A blank extension template (use this if your extension is not centered around a docker, you can still add dockers to extensions)"},
+{"name":"Simple Docker GUI QML","text":"A simple Hello World Docker with GUI externally loaded from a UI file that can be easily made visually with Qt Designer"},
+{"name":"Simple Docker GUI","text":"A simple Hello World Docker with GUI written declaratively, you can still use Qt Designer to make these via Form->View Python but you will not be able to load up the python code for editing"},
+{"name":"Simple Extension Dialog GUI QML","text":"A simple Hello World Dialog with GUI externally loaded from a UI file that can be easily made visually with Qt Designer"},
+{"name":"Simple Extension Dialog GUI","text":"A simple Hello World Dialog with GUI written declaratively, you can still use Qt Designer to make these via Form->View Python but you will not be able to load up the python code for editing"}
+] 

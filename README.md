@@ -35,6 +35,9 @@ You can also bind console to your favorite text editor and send the code from th
 
 **Krita API** - Collection of Krita API commands and optionally download API documentation. Can also generate python autocomplete file.
 
+**Simple Plugin Generator** - A simple generator that creates a starter for your own plugin
+
+
 I have a bit more nice features planned, but not sure how long it will take as work and other commitments are getting in the way. But it'll probably be before the end of the year...
 
 Anyways, hope developers find this useful and make more plugins!
