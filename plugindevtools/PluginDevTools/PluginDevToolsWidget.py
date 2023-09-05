@@ -1317,6 +1317,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
         def getCode(self):
             obj = self.currentWidget
+            className = obj.metaObject().className()
 
             lastNamed = None
             lastItem = None
@@ -1385,6 +1386,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     onWidget = "pobj"
 
                 backFill = False
+                hintCode = ''
 
                 for item in reversed(path):
                     if item is lastItem:
@@ -1393,6 +1395,13 @@ Would you like to download the API details(less than 200kb of data) automaticall
                         else:
                             backFill = True
                             codeBase += "# TODO "+type(item).__name__ + ""
+                            i=0
+                            for w in lastItem.findChildren(type(self.currentWidget)):
+                                if w.metaObject().className() == className:
+                                        i+=1
+                            if i == 1:
+                                hintCode="# OPTION: mobj = next((w for w in "+onWidget+".findChildren("+ type(self.currentWidget).__name__ +") if w.metaObject().className() == '"+className+"'), None)"
+
 
                     elif item is lastNamed:
                         if len(lastNamed.findChildren(type(self.currentWidget))) == 1:
@@ -1400,8 +1409,17 @@ Would you like to download the API details(less than 200kb of data) automaticall
                         else:
                             backFill = True
                             codeBase += "# TODO "+type(item).__name__ + ""
+                            i=0
+                            for w in lastNamed.findChildren(type(self.currentWidget)):
+                                if w.metaObject().className() == className:
+                                        i+=1
+                            if i == 1:
+                                hintCode="# OPTION: mobj = next((w for w in "+onWidget+".findChildren("+ type(self.currentWidget).__name__ +") if w.metaObject().className() == '"+className+"'), None)"
                     elif backFill:
                         codeBase += " > "+type(item).__name__ +""
+
+                if hintCode != '':
+                    codeBase += "\n "+hintCode
 
             tobj = []
             #print ("PATH", path, codeBase)
