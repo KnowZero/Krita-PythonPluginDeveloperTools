@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import *
 '''[%AUTOCOMPLETE%]'''
-import uic
+from PyQt5 import uic
 
 class '''[%SHORTNAME%]'''(DockWidget):
 

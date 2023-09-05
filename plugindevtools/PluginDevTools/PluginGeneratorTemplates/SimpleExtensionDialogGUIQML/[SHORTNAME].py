@@ -1,5 +1,5 @@
 '''[%AUTOCOMPLETE%]'''
-import uic
+from PyQt5 import uic
 
 class '''[%SHORTNAME%]'''Dialog(QDialog):
     
