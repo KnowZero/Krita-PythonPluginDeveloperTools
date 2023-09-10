@@ -1,5 +1,5 @@
 from krita import *
-import uic
+from PyQt5 import uic
 import re
 import os
 import subprocess
