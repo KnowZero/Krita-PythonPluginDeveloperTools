@@ -56,19 +56,26 @@
     .paramType {
       font-style: italic;
     }
+    
+    .filePrev {
+      color: #DDDD00;
+    }
+    .methodPrev {
+      color: #DDDD00;
+    }
     </style>
     
     
     <main>
     
-    <h1>Classes <select id="branch" onchange="setBranch(this.value)"></select></h1>
+    <h1>Classes <select id="branch" onchange="setBranch(this.value)"></select> (Compare to Prev Branch: <select id="prevbranch" onchange="setPrevBranch(this.value)"></select>) <button onclick="showChanges()">Show New/Changes Only</button></h1>
     <div id="classContainer"></div>
     
     
   <div style="display: none">  
     <div id="fileTemplate">
       <div>
-        <h2 class="fileName" onclick="showClass(event.target)"></h2>
+        <h2 class="fileHeader" onclick="showClass(event.target)"><span class="fileName"></span><span class="filePrev"></span></h2>
         <div class="fileContent" style="display: none">None</div>
       </div>
     </div>
@@ -86,6 +93,7 @@
     <div>
       <span class="methodName"></span>(<span class="methodParams"></span>) -> <span class="methodReturn"></span>
     </div>
+    <div class="methodPrev"></div>
     <div class="methodDoc"></div>
     </div>
     </div>
@@ -100,6 +108,7 @@
     <script>
     
   let currentBranch = 'master';
+  let prevBranch = '';
     
   const container = document.getElementById('classContainer');
   const fileTemplate = document.getElementById('fileTemplate').firstElementChild;
@@ -143,8 +152,9 @@
         'void': ['None']
   };
   
-  let mapDict = {};
+  //let mapDict = {};
   let classKeys = [];
+  let classKeysPrev = [];
   
   
   function showKritaType(typeItem) {
@@ -181,6 +191,9 @@
   .then(function (content) {
 
   let select = document.getElementById('branch');
+  let prevselect = document.getElementById('prevbranch');
+  
+
   
   content.unshift({ name:'master' });
   
@@ -188,8 +201,16 @@
   let  opt = document.createElement('option');
   opt.value = branch.name;
   opt.textContent = branch.name;
-  select.appendChild(opt);
   
+  
+  
+  prevselect.appendChild(opt.cloneNode(true));
+  select.appendChild(opt);
+
+  
+  
+
+
   });
   
   
@@ -203,8 +224,20 @@
       }
   currentBranch = branch;
   
+  
+  
   init();
   
+  }
+  
+  function setPrevBranch(branch) {
+        while (child = container.firstChild) {
+        container.removeChild(child);
+      }
+  prevBranch = branch;
+  
+  
+  init();
   }
   
   
@@ -242,23 +275,45 @@
    const url = 'https://invent.kde.org/api/v4/projects/graphics%2Fkrita/repository/files/libs%2Flibkis%2FCMakeLists.txt/raw?ref='+currentBranch;
    
   fetch(url)
-  .then(function (response) { return response.text() } )
+  .then(function (response) {
+  
+    if (currentBranch != prevBranch && prevBranch != '') {
+    
+      return fetch('https://invent.kde.org/api/v4/projects/graphics%2Fkrita/repository/files/libs%2Flibkis%2FCMakeLists.txt/raw?ref='+prevBranch)
+      .then(function (prevresponse) { return Promise.all([response.text(),prevresponse.text()]) })
+      
+    } else {
+  
+      return response.text()
+    }
+  
+  } )
   .then(function (content) {
+  
+    if (!Array.isArray(content)) content=[content]
   
 
   
     const regexp = new RegExp(String.raw`\s*(.+?)\.cpp`,'g');
     let matchList=[];
+    let matchListPrev=[];
     let match;
 
 
-    while ((match = regexp.exec(content)) !== null) {
+    while ((match = regexp.exec(content[0])) !== null) {
       if (match[1] !== 'LibKisUtils') {
         matchList.push(match[1]);
       }
     }
     classKeys = matchList;
-    callback(matchList);
+    while ((match = regexp.exec(content[1])) !== null) {
+      if (match[1] !== 'LibKisUtils') {
+        matchListPrev.push(match[1]);
+      }
+    }
+    classKeysPrev = matchListPrev;
+    
+    callback(matchList,matchListPrev);
   
   
   });
@@ -266,7 +321,7 @@
   }
   
   function classData(className, url, callback) {
-
+let mapDict2 = {}
   fetch(url)
   .then(function (response) { return response.text() } )
   .then(function (content) {
@@ -278,13 +333,14 @@
   const matchFile = content.match(regexFile);
   content = content.replace(regexFile,'');
   
+  
        
   if (matchFile) {
       const modName = matchFile[2];
       let docContent = matchFile[1] ? matchFile[1]:'';
       
 
-      mapDict[modName] = { 'doc': getDoc(docContent), 'methods':{}, 'declare':[], 'parent':matchFile[3]  };
+      mapDict2[modName] = { 'doc': getDoc(docContent), 'methods':{}, 'declare':[], 'parent':matchFile[3]  };
       let i = 0;
       //mapDict[modName]['declare']={};
       //console.log("cont1",content);
@@ -341,14 +397,14 @@
                   }
                   
                 if (methName == modName) {
-                                        mapDict[modName]['declare'].push({ 
+                                        mapDict2[modName]['declare'].push({ 
                                             'doc': docMethod, 
                                             'return': matchMethod.groups.cname ? className:matchMethod.groups.type, 
                                             'params': params, 
                                             'access': methodAccess.trim() 
                                             });
                 } else {
-                                        mapDict[modName]['methods'][methName]={
+                                        mapDict2[modName]['methods'][methName]={
                                             'name': methName,
                                             'doc':docMethod, 
                                             'return': matchMethod.groups.type.trim(), 
@@ -373,7 +429,7 @@
       
       //console.log("cont",content);
   
-  callback();
+  callback(className,mapDict2);
   }
 
 
@@ -387,9 +443,9 @@
 
      
      
-     function showClass(target) {
+     function showClass(target, nohash) {
      if (target.className != 'fileName') return;
-     fileItem = target.parentNode;
+     fileItem = target.parentNode.parentNode;
      console.log(  fileItem.id );
      
      let fileContent = fileItem.getElementsByClassName('fileContent')[0];
@@ -398,33 +454,86 @@
      let child;
      
       while (child = fileContent.firstChild) {
+        
         fileContent.removeChild(child);
       }
       
-     
-      classData(fileItem.id,'https://invent.kde.org/api/v4/projects/graphics%2Fkrita/repository/files/libs%2Flibkis%2F'+fileItem.id+'.h/raw?ref='+currentBranch, function () {
+
+      classData(fileItem.id,'https://invent.kde.org/api/v4/projects/graphics%2Fkrita/repository/files/libs%2Flibkis%2F'+fileItem.id+'.h/raw?ref='+currentBranch, async function (className,data) {
+      console.log("loaded", className)
+        let prevMapDict = {}
+
+        if (prevBranch != '' && currentBranch !== prevBranch && classKeysPrev.indexOf(className) !== -1) {
+          prevMapDict = await new Promise(function(resolve) {
+            classData(className,'https://invent.kde.org/api/v4/projects/graphics%2Fkrita/repository/files/libs%2Flibkis%2F'+className+'.h/raw?ref='+prevBranch, async function (prevClass,prevData) {
+            
+            resolve(prevData)
+            
+            })
+          
+          })
+          
+
+        }
+        
       
+
+        let mapDict = data
+     
         
         
         let classItem = classTemplate.cloneNode(true);
         
-        classItem.getElementsByClassName('classDoc')[0].innerHTML = mapDict[fileItem.id].doc;
+        classItem.getElementsByClassName('classDoc')[0].innerHTML = mapDict[className].doc;
         
-        if (mapDict[fileItem.id].parent !== '') classItem.getElementsByClassName('classParent')[0].innerHTML = 'Inherits from ' + convertType(mapDict[fileItem.id].parent);
+        if (mapDict[className].parent !== '') classItem.getElementsByClassName('classParent')[0].innerHTML = 'Inherits from ' + convertType(mapDict[className].parent);
         
         fileContent.appendChild(classItem);
         
-        methodList = classItem.getElementsByClassName('classMethods')[0];
+        let methodList = classItem.getElementsByClassName('classMethods')[0];
           
           
           
-          //console.log('C', mapDict);
-          
-          let methods = mapDict[fileItem.id].methods;
           
           
-          Object.keys(methods).forEach(function (key) {
+          let methods = mapDict[className].methods;
+
+          
+          
+          Object.keys(methods).sort().forEach(function (key) {
             let methodItem = methodTemplate.cloneNode(true);
+            
+            if (prevMapDict[className]) {
+              if (!prevMapDict[className].methods[key]) {
+                methodItem.getElementsByClassName('methodPrev')[0].textContent = "(NEW)"
+                methodItem.getElementsByClassName('methodPrev')[0].parentElement.classList.add('newMethod')
+                document.getElementById(className).classList.add('changedClass')
+                document.getElementById(className).classList.remove('oldClass')
+              } else if (JSON.stringify(prevMapDict[className].methods[key].params) != JSON.stringify(methods[key].params)) {
+              
+           
+                let changeText = "(CHANGED) old = "
+                  prevMapDict[className].methods[key].params.forEach(function(param,i) {
+                    changeText += (i > 0 ? ', ':'') + param.name + ": "
+                    changeText  += convertType(param.type);
+
+                    if (param.optional != '') {
+                    changeText += ' = '+ param.optional;
+                    }
+                    
+                  
+                  });
+
+                methodItem.getElementsByClassName('methodPrev')[0].textContent = changeText
+                methodItem.getElementsByClassName('methodPrev')[0].parentNode.classList.add('changedMethod')
+                document.getElementById(className).classList.add('changedClass')
+                document.getElementById(className).classList.remove('oldClass')
+              } else {
+                methodItem.getElementsByClassName('methodPrev')[0].parentNode.classList.add('oldMethod')
+                if (nohash) return
+                
+              }
+            }
             
             methodItem.getElementsByClassName('methodName')[0].textContent = methods[key].name;
             methodItem.getElementsByClassName('methodDoc')[0].innerHTML = methods[key].doc;
@@ -455,22 +564,75 @@
           });
           
           
-          window.location.hash= '#' + fileItem.id;
+          if (prevMapDict[className]) {
+            Object.keys(prevMapDict[className].methods).forEach(function (key) {
+              if ( !mapDict[className].methods[key] ) {
+                let methodItem = methodTemplate.cloneNode(true);
+                
+                methodItem.getElementsByClassName('methodPrev')[0].textContent = "(DEPRECATED)"
+                methodItem.getElementsByClassName('methodName')[0].textContent = key;
+                
+                methodList.appendChild(methodItem);
+              }
+            });
+          }
+          
+          
+          if (nohash) {
+          
+            if (document.getElementById(className).classList.contains('oldClass')) document.getElementById(className).style.display='none'
+          } else {
+            window.location.hash= '#' + className;
+          }
           
           });
      
      }
      
+     function showChanges() {
+        classKeys.forEach(function(key) {
+          let target = document.getElementById(key).getElementsByClassName('fileName')[0]
+         
+          showClass(target,true);
+        
+        })
+        
+
+     }
+     
      
      function init() {
-      classList(function (files) {
+      classList(function (files,prevFiles) {
+
         files.sort().forEach(function (file) {
             let fileItem = fileTemplate.cloneNode(true);
             fileItem.id = file;
             fileItem.getElementsByClassName('fileName')[0].textContent = file;
             
+            
+            if (prevFiles.length > 0 && prevFiles.indexOf(file) == -1) {
+              fileItem.getElementsByClassName('filePrev')[0].textContent = " (NEW)";
+              fileItem.getElementsByClassName('fileName')[0].parentElement.parentElement.classList.add('newClass')
+            } else {
+              fileItem.getElementsByClassName('fileName')[0].parentElement.parentElement.classList.add('oldClass')
+            }
+            
+            
             container.appendChild(fileItem);
         });
+        
+        prevFiles.sort().forEach(function (file) {
+          if (files.indexOf(file) == -1) {
+            let fileItem = fileTemplate.cloneNode(true);
+            fileItem.getElementsByClassName('fileName')[0].textContent = file;
+            fileItem.getElementsByClassName('fileName')[0].onclick="";
+            fileItem.getElementsByClassName('filePrev')[0].textContent = " (DEPRECATED)";
+            container.appendChild(fileItem);
+          }
+        });
+        
+        
+        
       });
      }
      
