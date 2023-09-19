@@ -63,6 +63,11 @@
     .methodPrev {
       color: #DDDD00;
     }
+    
+    body {
+      color: #FFF;
+      background-color: #000;
+      }
     </style>
     
     
@@ -328,7 +333,7 @@ let mapDict2 = {}
 
 
   
-    const regexMethod = new RegExp(String.raw`(?:.+?(?<doc>\/\*\*\s*.+?\s*\*\/|\/\/\/[^\r\n]+?)\s*?|\s*?)\n\s*?(?:(?<type>(?:virtual|static|)\s*?[\w\*]+(?:\<[\w \*,]+\>|))\s+(?<name>[\w\*]+)|(?<cname>`+className+String.raw`))\((?<params>[^\r\n]*)\)(?<extra>[^\r\n])*?;`,'s');
+    const regexMethod = new RegExp(String.raw`(?:[^(]+?(?<doc>\/\*\*\s*.+?\s*\*\/|\/\/\/[^\r\n]+?)\s*?|\s*?)\n\s*?(?:(?<type>(?:virtual|static|)\s*?[\w\*]+(?:\<[\w \*,]+\>|))\s+(?<name>[\w\*]+)|(?<cname>`+className+String.raw`))\((?<params>[^\r\n]*)\)(?<extra>[^\r\n])*?;`,'s');
   
   const matchFile = content.match(regexFile);
   content = content.replace(regexFile,'');
@@ -362,7 +367,7 @@ let mapDict2 = {}
             
                 const matchMethod = subcontent.match(regexMethod);
                 subcontent = subcontent.replace(regexMethod,'');
-                //console.log(subcontent, matchMethod);
+                console.log(subcontent, matchMethod);
                 
                 if (matchMethod) {
               
@@ -479,7 +484,7 @@ let mapDict2 = {}
       
 
         let mapDict = data
-     
+     console.log(mapDict)
         
         
         let classItem = classTemplate.cloneNode(true);
