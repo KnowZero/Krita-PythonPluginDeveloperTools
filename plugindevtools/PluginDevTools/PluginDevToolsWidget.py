@@ -1766,10 +1766,10 @@ Would you like to download the API details(less than 200kb of data) automaticall
             parentItem.appendRow([
                 QStandardItem( Krita.instance().icon('visible' if visible else 'novisible'), type(obj).__name__ ),
                 #QStandardItem( Krita.instance().icon('novisible' if objType == 'topLevelWidgets' and obj.isHidden() else 'visible'), type(obj).__name__ ),
-                QStandardItem( obj.objectName() ),
-                QStandardItem( obj.metaObject().className() ),
-                QStandardItem( objType ),
-                QStandardItem( text )
+                QStandardItem( str(obj.objectName()) ),
+                QStandardItem( str(obj.metaObject().className()) ),
+                QStandardItem( str(objType) ),
+                QStandardItem( str(text) )
             ])
 
             item = parentItem.child(parentItem.rowCount() - 1)
