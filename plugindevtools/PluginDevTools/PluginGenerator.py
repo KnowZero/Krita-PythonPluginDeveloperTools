@@ -184,6 +184,7 @@ class PluginGeneratorDialog(QDialog):
         self.centralWidget.setupGitBtn.clicked.connect(self.gitRemotePath)
         self.centralWidget.hotkeysBtn.clicked.connect(self.genActions)
         self.centralWidget.doneBtn.clicked.connect(self.doneClicked)
+        self.centralWidget.projectPathSymlinkChk.toggled.connect(self.toggleSymlink)
         
         self.centralWidget.autocompleteChk.stateChanged.connect(self.autocompleteCheck)        
         
@@ -195,6 +196,18 @@ class PluginGeneratorDialog(QDialog):
             self.centralWidget.setupGitChk.setEnabled(False)
             self.centralWidget.setupGitBtn.setEnabled(False)
 
+
+        
+        
+    def toggleSymlink(self):
+        if self.centralWidget.projectPathBtn.isEnabled():
+            self.centralWidget.projectPathBtn.setEnabled(False)
+            self.centralWidget.projectPathHeaderLabel.setText('Project Path:')
+            self.centralWidget.projectPathLabel.setText(os.path.join(self.respath,'pykrita'))
+        else:
+            self.centralWidget.projectPathBtn.setEnabled(True)
+            self.centralWidget.projectPathHeaderLabel.setText('Project Path: (project path will symlink to your pykrita folder)')
+            self.centralWidget.projectPathLabel.setText('')
 
     def doneClicked(self):
         res = self.buildPlan()
@@ -228,6 +241,7 @@ class PluginGeneratorDialog(QDialog):
         return xml
     
     def buildPlan(self):
+        self.plan=[]
         projectPath = self.centralWidget.projectPathLabel.text()
         if projectPath == 'Select Path...' or not os.path.isdir(projectPath):
             return { 'error':"Invalid 'Project Path'" }
@@ -243,10 +257,12 @@ class PluginGeneratorDialog(QDialog):
         template = self.centralWidget.templateListWidget.currentItem()
         if not template:
             return { 'error':"No template was selected" }
-                      
+        
         projectRoot = os.path.join(projectPath,shortName)
-             
-        self.plan.append([ lambda: os.mkdir(projectRoot), "Create Directory "+projectRoot ])
+        if self.centralWidget.projectPathSymlinkChk.isChecked():
+            self.plan.append([ lambda: os.mkdir(projectRoot), "Create Directory "+projectRoot ])
+        else:
+            projectRoot= os.path.join(self.respath,'pykrita')
         
         projectDesktopFile = os.path.join(projectRoot,shortName+'.desktop')
         projectDesktopFileContent = '''[Desktop Entry]
