@@ -79,7 +79,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_4">
       <item>
-       <widget class="QLabel" name="label_7">
+       <widget class="QLabel" name="projectPathHeaderLabel">
         <property name="text">
          <string>Project Path: (project path will symlink to your pykrita folder)</string>
         </property>
