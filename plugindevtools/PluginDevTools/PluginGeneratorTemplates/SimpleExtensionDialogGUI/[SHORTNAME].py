@@ -10,6 +10,7 @@ class '''[%SHORTNAME%]'''Dialog(QDialog):
         label.setAlignment(Qt.AlignCenter)
         label.setText("Hello World")
         
+        layout = QVBoxLayout()
         layout.addWidget(label)
         
         self.setLayout(layout)

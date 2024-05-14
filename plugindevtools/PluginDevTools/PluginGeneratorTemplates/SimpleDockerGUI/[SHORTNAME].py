@@ -11,10 +11,11 @@ class '''[%SHORTNAME%]'''(DockWidget):
         label.setAlignment(Qt.AlignCenter)
         label.setText("Hello World")
         
+        layout = QVBoxLayout()
         layout.addWidget(label)
         
-        self.setLayout(layout)
-        
+        self.layout().addItem(layout)
+       
 
 
     def canvasChanged(self, canvas):

@@ -8,10 +8,7 @@ class '''[%SHORTNAME%]'''Dialog(QDialog):
         self.setWindowTitle("'''[%PLUGINTITLE%]'''")
         self.centralWidget = uic.loadUi( os.path.join(os.path.dirname(os.path.realpath(__file__)),"'''[%SHORTNAME%]'''.ui"))
         
-        layout = QVBoxLayout()
-        layout.addWidget(self.centralWidget)
-        
-        self.setLayout(layout)
+        self.setWidget(self.centralWidget)
 
 class '''[%SHORTNAME%]'''(Extension):
 
