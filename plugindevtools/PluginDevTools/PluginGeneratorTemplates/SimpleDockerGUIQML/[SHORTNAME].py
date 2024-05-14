@@ -9,7 +9,10 @@ class '''[%SHORTNAME%]'''(DockWidget):
         self.setWindowTitle("'''[%PLUGINTITLE%]'''")
         self.centralWidget = uic.loadUi( os.path.join(os.path.dirname(os.path.realpath(__file__)),"'''[%SHORTNAME%]'''.ui"))
         
-        self.setWidget(self.centralWidget)
+        layout = QVBoxLayout()
+        layout.addWidget(self.centralWidget)
+        
+        self.setLayout(layout)
 
     def canvasChanged(self, canvas):
         pass
