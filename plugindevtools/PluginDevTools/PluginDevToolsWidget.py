@@ -743,7 +743,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
 
             item = QStandardItem( f.getvalue() )
-            item.setForeground(QBrush(QColor('#000099')))
+            item.setForeground(QBrush(QColor('#1eb131')))
             rootItem.appendRow( item )
 
             self.historyTreeView.expand(self.proxyModel.mapFromSource(rootItem.index()));
