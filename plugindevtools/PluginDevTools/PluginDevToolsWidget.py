@@ -748,7 +748,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 item.setForeground(QBrush(QColor('#094813')))
             else: 
                 # color for dark themes
-                item.setForeground(QBrush(QColor('#1eb131')))
+                item.setForeground(QBrush(QColor('#25DA3D')))
             rootItem.appendRow( item )
 
             self.historyTreeView.expand(self.proxyModel.mapFromSource(rootItem.index()));
