@@ -575,9 +575,6 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
             self.caller.centralWidget.consoleClearBtn.clicked.connect(self.clearConsole)
 
-            self.caller.centralWidget.consoleTempScriptFileBtn.toggled.connect(self.tempScriptFile)
-            self.caller.centralWidget.consoleSetScriptFileBtn.toggled.connect(self.setScriptFile)
-
             for key in self.EXECUTE_KEYS:
                 self.caller.centralWidget.consoleDefaultExecuteCmb.addItem( key[0], key[1] )
 
@@ -600,6 +597,9 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     self.caller.centralWidget.consoleTempScriptFileBtn.setChecked(True)
                 else:
                     self.caller.centralWidget.consoleSetScriptFileBtn.setChecked(True)
+
+            self.caller.centralWidget.consoleTempScriptFileBtn.toggled.connect(self.tempScriptFile)
+            self.caller.centralWidget.consoleSetScriptFileBtn.toggled.connect(self.setScriptFile)
 
             self.firstRun = True
 
