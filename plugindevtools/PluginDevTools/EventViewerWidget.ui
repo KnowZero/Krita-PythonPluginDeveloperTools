@@ -193,7 +193,7 @@
           </item>
           <item>
            <property name="text">
-            <string>qApp.installEventFilter(self)</string>
+            <string>QApplication.instance().installEventFilter(self)</string>
            </property>
           </item>
          </widget>

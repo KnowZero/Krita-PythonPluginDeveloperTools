@@ -9,8 +9,12 @@ import time
 import re
 import io
 import os
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+try:
+    from PyQt6.QtCore import *
+    from PyQt6.QtGui import *
+except:
+    from PyQt5.QtCore import *
+    from PyQt5.QtGui import *
 
 class GetKritaAPI(QObject):
     

@@ -1,5 +1,8 @@
 '''[%AUTOCOMPLETE%]'''
-from PyQt5 import uic
+try:
+    from PyQt6 import uic
+except:
+    from PyQt5 import uic
 
 class '''[%SHORTNAME%]'''Dialog(QDialog):
     

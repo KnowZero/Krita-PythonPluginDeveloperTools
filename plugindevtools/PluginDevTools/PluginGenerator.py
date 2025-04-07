@@ -1,5 +1,8 @@
 from krita import *
-from PyQt5 import uic
+try:
+    from PyQt6 import uic
+except:
+    from PyQt5 import uic
 import re
 import os
 import subprocess
@@ -37,7 +40,7 @@ class ActionGeneratorDialog(QDialog):
         data={}
         for row in range(0,self.model.rowCount()):
             index = self.model.index(row,0)
-            rec=index.data(Qt.UserRole+1)
+            rec=index.data(Qt.ItemDataRole.UserRole+1)
             if rec['category'] not in data:
                 data[rec['category']]={ 'text':rec['categoryText'], 'actions':[]  }
             newRec={}    
@@ -56,10 +59,10 @@ class ActionGeneratorDialog(QDialog):
         if not data:
             data=self.defaultForm
         item = QStandardItem(name)
-        item.setData(data, Qt.UserRole+1)
+        item.setData(data, Qt.ItemDataRole.UserRole+1)
         self.model.appendRow(item)
         index = self.model.indexFromItem(item)
-        self.centralWidget.listView.selectionModel().select(index, QtCore.QItemSelectionModel.ClearAndSelect)
+        self.centralWidget.listView.selectionModel().select(index, QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect)
     def deleteItem(self):
         items = self.centralWidget.listView.selectionModel().selectedIndexes()
         for item in items:
@@ -67,7 +70,7 @@ class ActionGeneratorDialog(QDialog):
     def openItem(self, old, new):
         items = self.centralWidget.listView.selectionModel().selectedIndexes()
         for item in items:
-            data = item.data(Qt.UserRole+1)
+            data = item.data(Qt.ItemDataRole.UserRole+1)
             print ("open form", data )
             if data:
                 self.loadForm(self.centralWidget, data)
@@ -78,8 +81,8 @@ class ActionGeneratorDialog(QDialog):
             self.saveForm(self.centralWidget, data)
             print ("SAVE", data, item)
             
-            self.model.setData(item,data, Qt.UserRole+1)
-            self.model.setData(item,data['action.name'], Qt.DisplayRole)
+            self.model.setData(item,data, Qt.ItemDataRole.UserRole+1)
+            self.model.setData(item,data['action.name'], Qt.ItemDataRole.DisplayRole)
             self.defaultForm['category']=data['category']
             self.defaultForm['categoryText']=data['categoryText']
 
@@ -104,7 +107,7 @@ class ActionGeneratorDialog(QDialog):
                             w.setCurrentIndex(w.findText(v))
                     elif isinstance(w,QListView) and w.model():
                         index = w.model().match(w.model().index(0, 0),
-                                                    Qt.DisplayRole, 
+                                                    Qt.ItemDataRole.DisplayRole, 
                                                     v,
                                                     1);
                         items[name]=w.setCurrentIndex(index)
@@ -127,7 +130,7 @@ class ActionGeneratorDialog(QDialog):
                     else:
                         items[name]=w.currentText()
                 elif isinstance(w,QListView) and w.model():
-                    items[name]=w.currentIndex().data(Qt.DisplayRole)
+                    items[name]=w.currentIndex().data(Qt.ItemDataRole.DisplayRole)
 
         
     def getData(self, data):
@@ -384,7 +387,7 @@ else:
                 
         
     def projectPath(self):
-        destDir = QFileDialog.getExistingDirectory(None, 'Select Project Directory',QDir.homePath(), QFileDialog.ShowDirsOnly)
+        destDir = QFileDialog.getExistingDirectory(None, 'Select Project Directory',QDir.homePath(), QFileDialog.Option.ShowDirsOnly)
         self.centralWidget.projectPathLabel.setText(destDir)
 
     def writeToFile(self,path,s):
@@ -406,9 +409,9 @@ else:
             
         if os.path.isfile(respath + ".KritaAPI."+ver+".zip"):
             return True
-        msgbox = QMessageBox(QMessageBox.Question,'Would you like to download the API details automatically?',
-                                '', QMessageBox.Yes | QMessageBox.No)
-        msgbox.setTextFormat(Qt.RichText)
+        msgbox = QMessageBox(QMessageBox.Icon.Question,'Would you like to download the API details automatically?',
+                                '', QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        msgbox.setTextFormat(Qt.TextFormat.RichText)
 
         msgbox.setText("""Developer Tools would like to connect to the internet to download Krita API details.
 This process will only access Krita's offical git repository at invent.kde.org.
@@ -426,23 +429,23 @@ This only needs to be done once per new version of Krita. Do note that Krita may
 Would you like to download the API details(less than 200kb of data) automatically?
 """)
 
-        if msgbox.exec() == QMessageBox.Yes:
+        if msgbox.exec() == QMessageBox.StandardButton.Yes:
             getAPI = GetKritaAPI()
             res = {}
             try:
                 res=getAPI.updateData(ver)
             except:
-                QMessageBox(QMessageBox.Warning,'Failed!', "Failed to download API details! Make sure you have internet connection and your python urlib ssl is working properly").exec()
+                QMessageBox(QMessageBox.Icon.Warning,'Failed!', "Failed to download API details! Make sure you have internet connection and your python urlib ssl is working properly").exec()
                 return False
             print ("RES", res)
 
             if res['status'] == 0:
-                msgbox = QMessageBox(QMessageBox.Warning,'Error',str(res['error']))
+                msgbox = QMessageBox(QMessageBox.Icon.Warning,'Error',str(res['error']))
 
                 msgbox.exec()
                 return False
             else:
-                QMessageBox(QMessageBox.Information,'Success!', "API details have been downloaded successfully!").exec()
+                QMessageBox(QMessageBox.Icon.Information,'Success!', "API details have been downloaded successfully!").exec()
         else:
             return False
 

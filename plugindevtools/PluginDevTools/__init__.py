@@ -16,7 +16,7 @@ app.addExtension(testExtension)
 
 # Add to docker list
 DOCKER_ID = 'pluginDevToolsDocker'
-dock_widget_factory = DockWidgetFactory(DOCKER_ID, DockWidgetFactoryBase.DockBottom, PluginDevToolsDocker)
+dock_widget_factory = DockWidgetFactory(DOCKER_ID, DockWidgetFactoryBase.DockPosition.DockBottom, PluginDevToolsDocker)
 app.addDockWidgetFactory(dock_widget_factory)
 
 def retrieveDocker(docker_id: str)->PluginDevToolsDocker:

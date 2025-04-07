@@ -1,4 +1,7 @@
-from PyQt5.QtWidgets import *
+try:
+    from PyQt6.QtWidgets import *
+except:
+    from PyQt5.QtWidgets import *
 '''[%AUTOCOMPLETE%]'''
 
 class '''[%SHORTNAME%]'''(DockWidget):
@@ -10,4 +13,4 @@ class '''[%SHORTNAME%]'''(DockWidget):
     def canvasChanged(self, canvas):
         pass
 
-Krita.instance().addDockWidgetFactory(DockWidgetFactory("'''[%SHORTNAME%]'''", DockWidgetFactoryBase.DockRight, '''[%SHORTNAME%]''')) 
+Krita.instance().addDockWidgetFactory(DockWidgetFactory("'''[%SHORTNAME%]'''", DockWidgetFactoryBase.DockPosition.DockRight, '''[%SHORTNAME%]''')) 

@@ -7,7 +7,7 @@ class '''[%SHORTNAME%]'''Dialog(QDialog):
         self.setWindowTitle("'''[%PLUGINTITLE%]'''")
         label = QLabel(self)
         label.setObjectName("label")
-        label.setAlignment(Qt.AlignCenter)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setText("Hello World")
         
         layout = QVBoxLayout()

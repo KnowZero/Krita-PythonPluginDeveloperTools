@@ -1,5 +1,8 @@
 from krita import *
-from PyQt5 import QtCore, QtGui, QtWidgets, QtSvg, uic
+try:
+    from PyQt6 import QtCore, QtGui, QtWidgets, QtSvg, uic
+except:
+    from PyQt5 import QtCore, QtGui, QtWidgets, QtSvg, uic
 import sip
 import pprint
 import time
@@ -107,7 +110,7 @@ class PluginDevToolsWidget(QWidget):
 
             self.proxyModel = QSortFilterProxyModel()
 
-            self.proxyModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+            self.proxyModel.setFilterCaseSensitivity( Qt.CaseSensitivity.CaseInsensitive )
             self.proxyModel.setFilterKeyColumn(-1)
             self.proxyModel.setRecursiveFilteringEnabled(True)
 
@@ -309,9 +312,9 @@ class PluginDevToolsWidget(QWidget):
                 respath = os.path.dirname(os.path.realpath(__file__))
             else:
                 respath=os.path.join(respath,'pykrita','PluginDevTools')
-            msgbox = QMessageBox(QMessageBox.Question,'Would you like to download the API details automatically?',
-                                       '', QMessageBox.Yes | QMessageBox.No)
-            msgbox.setTextFormat(Qt.RichText)
+            msgbox = QMessageBox(QMessageBox.Icon.Question,'Would you like to download the API details automatically?', 
+                                       '', QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            msgbox.setTextFormat(Qt.TextFormat.RichText)
 
             msgbox.setText("""Developer Tools would like to connect to the internet to download Krita API details.
 This process will only access Krita's offical git repository at invent.kde.org.
@@ -329,18 +332,18 @@ This only needs to be done once per new version of Krita. Do note that Krita may
 Would you like to download the API details(less than 200kb of data) automatically?
 """)
 
-            if msgbox.exec() == QMessageBox.Yes:
+            if msgbox.exec() == QMessageBox.StandardButton.Yes:
                 getAPI = GetKritaAPI()
                 res = getAPI.updateData(ver)
 
                 if res['status'] == 0:
-                    msgbox = QMessageBox(QMessageBox.Warning,'Error',str(res['error']))
+                    msgbox = QMessageBox(QMessageBox.Icon.Warning,'Error',str(res['error']))
 
                     msgbox.exec()
                     print ( "ERROR!", str(e) )
                     return
                 else:
-                    QMessageBox(QMessageBox.Information,'Success!', "API details have been downloaded successfully!").exec()
+                    QMessageBox(QMessageBox.Icon.Information,'Success!', "API details have been downloaded successfully!").exec()
 
                 self.caller.kritaAPI[ver] = getAPI.parseData(ver)
 
@@ -369,7 +372,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
             indexes = self.kritaapiTreeView.selectionModel().selectedIndexes()
 
             if indexes:
-                self.kritaapiTreeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
+                self.kritaapiTreeView.scrollTo(indexes[0], QAbstractItemView.ScrollHint.PositionAtCenter)
 
 
 
@@ -509,7 +512,10 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
                 methName = str(meth.name(), 'utf-8') + "(" + str(b','.join( [ ptypes[i]+b" "+pnames[i] for i in range(0,meth.parameterCount()) ] ), 'utf-8') + ")"
                 if methName not in metaDict['methods']:
-                    methType = self.caller.t['inspector'].METHOD_ACCESS[int(meth.access())] + " " + self.caller.t['inspector'].METHOD_TYPES[int(meth.methodType())]
+                    if QLibraryInfo.version().majorVersion() == 6: #PyQt6
+                        methType = self.caller.t['inspector'].METHOD_ACCESS[meth.access().value] + " " + self.caller.t['inspector'].METHOD_TYPES[meth.methodType().value]
+                    else: # PyQt5
+                        methType = self.caller.t['inspector'].METHOD_ACCESS[meth.access()] + " " + self.caller.t['inspector'].METHOD_TYPES[meth.methodType()]
 
                     className = ''#type(obj).__name__
 
@@ -534,10 +540,10 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
     class PluginDevToolsConsole():
         EXECUTE_KEYS = [
-            ['Enter', Qt.Key_Return, Qt.NoModifier ],
-            ['Shift + Enter', Qt.Key_Return, Qt.ShiftModifier ],
-            ['Ctrl + E', Qt.Key_E, Qt.ControlModifier ],
-            ['Ctrl + F5', Qt.Key_F5, Qt.ControlModifier ],
+            ['Enter', Qt.Key.Key_Return, Qt.KeyboardModifier.NoModifier ],
+            ['Shift + Enter', Qt.Key.Key_Return, Qt.KeyboardModifier.ShiftModifier ],
+            ['Ctrl + E', Qt.Key.Key_E, Qt.KeyboardModifier.ControlModifier ],
+            ['Ctrl + F5', Qt.Key.Key_F5, Qt.KeyboardModifier.ControlModifier ],
         ]
 
         def __init__(self, caller):
@@ -743,7 +749,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
 
             item = QStandardItem( f.getvalue() )
-            if QtWidgets.qApp.palette().window().color().value() > QtWidgets.qApp.palette().windowText().color().value(): 
+            if QtWidgets.QApplication.instance().palette().window().color().value() > QtWidgets.QApplication.instance().palette().windowText().color().value(): 
                 # color for light themes
                 item.setForeground(QBrush(QColor('#094813')))
             else: 
@@ -760,7 +766,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
 
         def searchTreeFilter(self, text):
-            self.proxyModel.setFilterRole(Qt.DisplayRole)
+            self.proxyModel.setFilterRole(Qt.ItemDataRole.DisplayRole)
             self.proxyModel.setFilterFixedString(text)
 
         class textEditFilterClass(QWidget):
@@ -794,7 +800,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
             self.proxyModel.setSourceModel(self.listModel)
             self.listView.setModel(self.proxyModel)
 
-            self.proxyModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+            self.proxyModel.setFilterCaseSensitivity( Qt.CaseSensitivity.CaseInsensitive )
 
             self.listView.clicked.connect(self.iconClicked)
 
@@ -829,8 +835,8 @@ Would you like to download the API details(less than 200kb of data) automaticall
             iconFormats = ["*.svg","*.svgz","*.svz","*.png"]
 
             if self.caller.centralWidget.boolIconsKrita.isChecked():
-                iconList = QDir(":/pics/").entryList(iconFormats, QDir.Files)
-                iconList += QDir(":/").entryList(iconFormats, QDir.Files)
+                iconList = QDir(":/pics/").entryList(iconFormats, QDir.Filter.Files)
+                iconList += QDir(":/").entryList(iconFormats, QDir.Filter.Files)
 
                 for iconName in iconList:
                     name = iconName.split('_',1)
@@ -846,7 +852,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     iconDict[iconName]={}
 
             if self.caller.centralWidget.boolIconsKritaExtra.isChecked():
-                iconList = QDir(":/icons/").entryList(iconFormats, QDir.Files)
+                iconList = QDir(":/icons/").entryList(iconFormats, QDir.Filter.Files)
                 #iconList += QDir(":/images/").entryList(iconFormats, QDir.Files)
 
                 for iconName in iconList:
@@ -890,7 +896,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
             self.proxyModel.setSourceModel(self.tableModel)
             self.tableView.setModel(self.proxyModel)
 
-            self.proxyModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+            self.proxyModel.setFilterCaseSensitivity( Qt.CaseSensitivity.CaseInsensitive )
             self.proxyModel.setFilterKeyColumn(-1)
 
             self.tableView.doubleClicked.connect(self.actionClicked)
@@ -927,10 +933,10 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
     class PluginDevToolsSelector():
         KEY_MODS = [
-            [Qt.ShiftModifier, Qt.Key_Shift],
-            [Qt.ControlModifier, Qt.Key_Control],
-            [Qt.AltModifier, Qt.Key_Alt],
-            [Qt.MetaModifier, Qt.Key_Meta],
+            [Qt.KeyboardModifier.ShiftModifier, Qt.Key.Key_Shift],
+            [Qt.KeyboardModifier.ControlModifier, Qt.Key.Key_Control],
+            [Qt.KeyboardModifier.AltModifier, Qt.Key.Key_Alt],
+            [Qt.KeyboardModifier.MetaModifier, Qt.Key.Key_Meta],
             ]
         def __init__(self, caller):
             super().__init__()
@@ -968,16 +974,16 @@ Would you like to download the API details(less than 200kb of data) automaticall
             #print ("create selector!")
             selectorWidget = QWidget(window)
             selectorWidget.setObjectName("DevToolsSelectorWidget")
-            #selectorWidget.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.WindowTransparentForInput)
-            selectorWidget.setWindowFlags(Qt.WindowTransparentForInput)
-            selectorWidget.setAttribute( Qt.WA_TransparentForMouseEvents )
+            #selectorWidget.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowTransparentForInput)
+            selectorWidget.setWindowFlags(Qt.WindowType.WindowTransparentForInput)
+            selectorWidget.setAttribute( Qt.WidgetAttribute.WA_TransparentForMouseEvents )
             selectorWidget.setVisible(False)
             selectorWidget.setStyleSheet("background-color: rgba(0, 0, 155, 50); border: 1px solid #000080;")
             #print ("selector id", selectorWidget)
             self.selectorWidget = selectorWidget
 
         def selected(self):
-            self.startSampling(QtWidgets.qApp.activeWindow())
+            self.startSampling(QtWidgets.QApplication.instance().activeWindow())
 
         def unselected(self):
             self.stopSampling()
@@ -987,19 +993,19 @@ Would you like to download the API details(less than 200kb of data) automaticall
             #>winStyle = window.styleSheet()
             #>if "DevToolsHoverWithSelector=" not in winStyle:
             #>    window.setStyleSheet( winStyle + '*[DevToolsHoverWithSelector="true"] { background-color: #000000; border: 3px solid #FF0000; color: #FF0000 }' )
-            QtWidgets.qApp.focusChanged.connect(self.focusItem)
-            QtWidgets.qApp.installEventFilter(self.windowFilter)
+            QtWidgets.QApplication.instance().focusChanged.connect(self.focusItem)
+            QtWidgets.QApplication.instance().installEventFilter(self.windowFilter)
             #>>>window.installEventFilter(self.windowFilter)
 
         def focusItem(self):
             #if self.currentWindow is not QApplication.activePopupWidget():
             #    print ("POPUP CHANGE!")
-            win = QtWidgets.qApp.activeWindow()
+            win = QtWidgets.QApplication.instance().activeWindow()
             if self.currentWindow is not win:
                 if win:
                     if self.selectorWidget and not sip.isdeleted(self.selectorWidget):
                         self.selectorWidget.setVisible(False)
-                    wid = win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindDirectChildrenOnly)
+                    wid = win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindChildOption.FindDirectChildrenOnly)
                     if wid:
                         self.selectorWidget = wid
                     else:
@@ -1012,8 +1018,8 @@ Would you like to download the API details(less than 200kb of data) automaticall
             currentWindow = self.currentWindow
             if self.currentWindow:
                 if localCall:
-                    QtWidgets.qApp.focusChanged.disconnect(self.focusItem)
-                    QtWidgets.qApp.installEventFilter(self.windowFilter)
+                    QtWidgets.QApplication.instance().focusChanged.disconnect(self.focusItem)
+                    QtWidgets.QApplication.instance().installEventFilter(self.windowFilter)
                 #??self.currentWindow.removeEventFilter(self.windowFilter)
                 self.currentWindow = None
             if self.selectorWidget:
@@ -1091,19 +1097,19 @@ Would you like to download the API details(less than 200kb of data) automaticall
             def eventFilter(self, obj, event):
                 etype = event.type()
 
-                if etype == QEvent.HoverMove or (etype == QEvent.KeyPress and event.key() == self.caller.modKey[1]):
-                    if etype == QEvent.KeyPress and event.key() == self.caller.modKey[1]:
-                        win = QtWidgets.qApp.activeWindow()
-                        self.caller.selectorWidget=win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindDirectChildrenOnly)
+                if etype == QEvent.Type.HoverMove or (etype == QEvent.Type.KeyPress and event.key() == self.caller.modKey[1]):
+                    if etype == QEvent.Type.KeyPress and event.key() == self.caller.modKey[1]:
+                        win = QtWidgets.QApplication.instance().activeWindow()
+                        self.caller.selectorWidget=win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindChildOption.FindDirectChildrenOnly)
 
                     if QApplication.keyboardModifiers() == self.caller.modKey[0]:
-                        win = QtWidgets.qApp.activeWindow()
+                        win = QtWidgets.QApplication.instance().activeWindow()
                         if win.__class__.__name__ == 'PluginDevToolsDialog':
                                 win.parentWidget().activateWindow()
                         pos = QCursor.pos()
                         onWidget = QApplication.widgetAt(pos)
                         self.caller.setCurrentSelector(onWidget)
-                elif etype == QEvent.KeyRelease and event.key() == self.caller.modKey[1] and self.caller.currentWidget:
+                elif etype == QEvent.Type.KeyRelease and event.key() == self.caller.modKey[1] and self.caller.currentWidget:
                         self.caller.finishedSampling()
 
 
@@ -1132,7 +1138,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
             self.treeModel = QStandardItemModel()
             self.proxyTreeModel = QSortFilterProxyModel()
-            self.proxyTreeModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+            self.proxyTreeModel.setFilterCaseSensitivity( Qt.CaseSensitivity.CaseInsensitive )
             self.proxyTreeModel.setRecursiveFilteringEnabled(True)
             self.proxyTreeModel.setFilterKeyColumn(-1)
             self.treeModel.setHorizontalHeaderLabels(['Class', 'Name', 'Meta Class', 'From', 'Text/Value'])
@@ -1144,7 +1150,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
             self.tableModel = QStandardItemModel()
             self.proxyTableModel = QSortFilterProxyModel()
-            self.proxyTableModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+            self.proxyTableModel.setFilterCaseSensitivity( Qt.CaseSensitivity.CaseInsensitive )
             self.proxyTableModel.setFilterKeyColumn(-1)
             self.tableModel.setHorizontalHeaderLabels(['Name', "Type", 'Value'])
 
@@ -1270,11 +1276,11 @@ Would you like to download the API details(less than 200kb of data) automaticall
         def showCurrentWidget(self, toggle, switchTab = False):
             if toggle:
                 self.showCurrentWidgetHighlight = True
-                win = QtWidgets.qApp.activeWindow()
+                win = QtWidgets.QApplication.instance().activeWindow()
                 if win.__class__.__name__ == 'PluginDevToolsDialog':
                     win = win.parentWidget()
                 self.caller.t['selector'].currentWindow = win
-                self.caller.t['selector'].selectorWidget=win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindDirectChildrenOnly)
+                self.caller.t['selector'].selectorWidget=win.findChild(QWidget, "DevToolsSelectorWidget", Qt.FindChildOption.FindDirectChildrenOnly)
                 self.caller.t['selector'].setCurrentSelector(self.currentWidget, False)
             else:
                 if switchTab is False:
@@ -1296,7 +1302,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 indexes = self.treeView.selectionModel().selectedIndexes()
 
                 if indexes:
-                    self.treeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
+                    self.treeView.scrollTo(indexes[0], QAbstractItemView.ScrollHint.PositionAtCenter)
 
 
 
@@ -1450,7 +1456,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     self.loadItemInfo( parent )
 
         def searchTreeFilter(self, text):
-            self.proxyTreeModel.setFilterRole(Qt.DisplayRole)
+            self.proxyTreeModel.setFilterRole(Qt.ItemDataRole.DisplayRole)
             if len(text) >= 3:
                 self.proxyTreeModel.setFilterFixedString(text)
                 self.treeView.expandAll()
@@ -1464,8 +1470,8 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
             if indexes:
                 self.treeView.expand(indexes[0])
-                self.treeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
-                self.treeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
+                self.treeView.scrollTo(indexes[0], QAbstractItemView.ScrollHint.PositionAtCenter)
+                self.treeView.scrollTo(indexes[0], QAbstractItemView.ScrollHint.PositionAtCenter)
 
 
         def searchTableFilter(self, text):
@@ -1476,18 +1482,18 @@ Would you like to download the API details(less than 200kb of data) automaticall
             #self.proxyTreeModel.setFilterRole(102)
             #self.proxyTreeModel.setFilterFixedString( str(id(obj)) )
             #self.proxyTreeModel.setFilterFixedString( "" )
-            #indexes = self.proxyTreeModel.match( self.proxyTreeModel.index(0,0) , 102, hex(id(obj)), 1, Qt.MatchRecursive )
+            #indexes = self.proxyTreeModel.match( self.proxyTreeModel.index(0,0) , 102, hex(id(obj)), 1, Qt.MatchFlag.MatchRecursive )
             #print ("MATCH", indexes)
             #if indexes:
-            #    #self.treeSelectModel.select( indexes[0], self.treeSelectModel.Select | self.treeSelectModel.Rows )
+            #    #self.treeSelectModel.select( indexes[0], self.treeSelectModel.SelectionFlag.Select | self.treeSelectModel.SelectionFlag.Rows )
             #    self.treeView.expand(indexes[0])
             #    self.treeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
             #    self.treeView.scrollTo(indexes[0], QAbstractItemView.PositionAtCenter)
-            #idx = self.treeModel.match( self.treeModel.index(0,0) , 101, obj, 1, Qt.MatchRecursive )
+            #idx = self.treeModel.match( self.treeModel.index(0,0) , 101, obj, 1, Qt.MatchFlag.MatchRecursive )
             #if idx:
             #    print ( idx[0].row() )
 
-                #>>self.treeSelectModel.select(idx[0], self.treeSelectModel.Select | self.treeSelectModel.Rows )
+                #>>self.treeSelectModel.select(idx[0], self.treeSelectModel.SelectionFlag.Select | self.treeSelectModel.SelectionFlag.Rows )
 
         def itemSelectionChanged(self, new, old):
             indexes = new.indexes()
@@ -1678,7 +1684,10 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
                     methName += "(" + str(b','.join( [ ptypes[i]+b" "+pnames[i] for i in range(0,meth.parameterCount()) ] ), 'utf-8') + ")"
                     if methName not in metaDict['methods']:
-                        methType = self.METHOD_ACCESS[int(meth.access())] + " " + self.METHOD_TYPES[int(meth.methodType())]
+                        if QLibraryInfo.version().majorVersion() == 6: #PyQt6
+                            methType = self.METHOD_ACCESS[meth.access().value] + " " + self.METHOD_TYPES[meth.methodType().value]
+                        else:
+                            methType = self.METHOD_ACCESS[meth.access()] + " " + self.METHOD_TYPES[meth.methodType()]
 
                         if inheritsFrom:
                             methType = methType + " [from "+meta.className()+"]"
@@ -1714,7 +1723,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 if isinstance(pObj, QMainWindow):
                     #idx = self.treeModel.indexFromItem(parentItem)
                     self.selectItemByRef(pObj)
-                    #self.treeSelectModel.select(idx, self.treeSelectModel.Select | self.treeSelectModel.Rows )
+                    #self.treeSelectModel.select(idx, self.treeSelectModel.SelectionFlag.Select | self.treeSelectModel.SelectionFlag.Rows )
                     #self.loadItemInfo(pObj)
 
 
@@ -1727,7 +1736,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
             if currentItem and pObj is currentItem:
                 idx = parentItem.index()
-                self.treeSelectModel.select( self.proxyTreeModel.mapFromSource(idx) , self.treeSelectModel.Select | self.treeSelectModel.Rows )
+                self.treeSelectModel.select( self.proxyTreeModel.mapFromSource(idx) , self.treeSelectModel.SelectionFlag.Select | self.treeSelectModel.SelectionFlag.Rows )
                 self.treeView.expand(idx)
                 #print ("TREE", idx, parentItem.text() )
 
@@ -1847,7 +1856,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
                 self.listenTreeModel = QStandardItemModel()
                 self.proxyListenTreeModel = QSortFilterProxyModel()
-                self.proxyListenTreeModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+                self.proxyListenTreeModel.setFilterCaseSensitivity( Qt.CaseSensitivity.CaseInsensitive )
                 self.proxyListenTreeModel.setRecursiveFilteringEnabled(True)
                 self.proxyListenTreeModel.setFilterKeyColumn(-1)
 
@@ -1859,7 +1868,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
                 self.signalTreeModel = QStandardItemModel()
                 self.proxySignalTreeModel = QSortFilterProxyModel()
-                self.proxySignalTreeModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+                self.proxySignalTreeModel.setFilterCaseSensitivity( Qt.CaseSensitivity.CaseInsensitive )
                 self.proxySignalTreeModel.setRecursiveFilteringEnabled(True)
                 self.proxySignalTreeModel.setFilterKeyColumn(-1)
 
@@ -1870,7 +1879,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
                 self.connectTreeModel = QStandardItemModel()
                 self.proxyConnectTreeModel = QSortFilterProxyModel()
-                self.proxyConnectTreeModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+                self.proxyConnectTreeModel.setFilterCaseSensitivity( Qt.CaseSensitivity.CaseInsensitive )
                 self.proxyConnectTreeModel.setRecursiveFilteringEnabled(True)
                 self.proxyConnectTreeModel.setFilterKeyColumn(-1)
 
@@ -1881,7 +1890,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
                 self.eventDataTableModel = QStandardItemModel()
                 self.proxyEventDataTableModel = QSortFilterProxyModel()
-                self.proxyEventDataTableModel.setFilterCaseSensitivity( Qt.CaseInsensitive )
+                self.proxyEventDataTableModel.setFilterCaseSensitivity( Qt.CaseSensitivity.CaseInsensitive )
                 self.proxyEventDataTableModel.setFilterKeyColumn(-1)
 
 
@@ -2010,8 +2019,10 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
                 methDoc = ('' if isSafe else '[UNSAFE]') + methName + "(" + str(b','.join( [ ptypes[i]+b" "+pnames[i] for i in range(0,meth.parameterCount()) ] ), 'utf-8') + ")"
 
-                methType = self.caller.METHOD_ACCESS[int(meth.access())] + " " + self.caller.METHOD_TYPES[int(meth.methodType())]
-
+                if QLibraryInfo.version().majorVersion() == 6: #PyQt6
+                    methType = self.caller.METHOD_ACCESS[meth.access().value] + " " + self.caller.METHOD_TYPES[meth.methodType().value]
+                else: #PyQt5
+                    methType = self.caller.METHOD_ACCESS[meth.access()] + " " + self.caller.METHOD_TYPES[meth.methodType()]
 
 
                 if methType == 'Public Signal' and methName not in self.signalsDict['current']:
@@ -2064,12 +2075,12 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 self.centralWidget.outputCmb.setEnabled(False)
 
                 for evId in self.eventDict:
-                    self.eventDict[evId]['item'][0].setData(QBrush(Qt.transparent), Qt.BackgroundRole)
-                    self.eventDict[evId]['item'][1].setData(QBrush(Qt.transparent), Qt.BackgroundRole)
+                    self.eventDict[evId]['item'][0].setData(QBrush(Qt.GlobalColor.transparent), Qt.ItemDataRole.BackgroundRole)
+                    self.eventDict[evId]['item'][1].setData(QBrush(Qt.GlobalColor.transparent), Qt.ItemDataRole.BackgroundRole)
 
                 for methName in self.signalsDict['current']:
-                    self.signalsDict['current'][methName]['item'][0].setData(QBrush(Qt.transparent), Qt.BackgroundRole)
-                    self.signalsDict['current'][methName]['item'][1].setData(QBrush(Qt.transparent), Qt.BackgroundRole)
+                    self.signalsDict['current'][methName]['item'][0].setData(QBrush(Qt.GlobalColor.transparent), Qt.ItemDataRole.BackgroundRole)
+                    self.signalsDict['current'][methName]['item'][1].setData(QBrush(Qt.GlobalColor.transparent), Qt.ItemDataRole.BackgroundRole)
 
 
                 if self.centralWidget.outputCmb.currentIndex() == 1:
@@ -2092,13 +2103,13 @@ Would you like to download the API details(less than 200kb of data) automaticall
                         if isinstance(meth,type(pyqtBoundSignal())) or isinstance(meth,type(pyqtSignal())):
                             meth.connect(self.signalsDict['current'][methName]['method'])
                         else:
-                            self.signalsDict['current'][methName]['item'][0].setData(QBrush(Qt.darkRed), Qt.BackgroundRole)
+                            self.signalsDict['current'][methName]['item'][0].setData(QBrush(Qt.GlobalColor.darkRed), Qt.ItemDataRole.BackgroundRole)
 
 
                 if self.centralWidget.eventFilterTypeCmb.currentIndex() == 0:
                     self.currentWidget.installEventFilter(self)
                 elif self.centralWidget.eventFilterTypeCmb.currentIndex() == 1:
-                    qApp.installEventFilter(self)
+                    QApplication.instance().installEventFilter(self)
 
 
 
@@ -2108,7 +2119,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     if self.centralWidget.eventFilterTypeCmb.currentIndex() == 0:
                         if not sip.isdeleted(self.currentWidget): self.currentWidget.removeEventFilter(self)
                     elif self.centralWidget.eventFilterTypeCmb.currentIndex() == 1:
-                        qApp.removeEventFilter(self)
+                        QApplication.instance().removeEventFilter(self)
 
 
                     for methName in self.signalsDict['current']:
@@ -2165,8 +2176,8 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
 
                     if not self.signalsDict['current'][methName]['used']:
-                        self.signalsDict['current'][methName]['item'][0].setData(QBrush(Qt.darkGreen), Qt.BackgroundRole)
-                        self.signalsDict['current'][methName]['item'][1].setData(QBrush(Qt.darkGreen), Qt.BackgroundRole)
+                        self.signalsDict['current'][methName]['item'][0].setData(QBrush(Qt.GlobalColor.darkGreen), Qt.ItemDataRole.BackgroundRole)
+                        self.signalsDict['current'][methName]['item'][1].setData(QBrush(Qt.GlobalColor.darkGreen), Qt.ItemDataRole.BackgroundRole)
 
                     signalData = ', '.join(map(str,params))
 
@@ -2204,8 +2215,8 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     if not repeatedItem or foldMode == 1 or foldMode == 2:
                         self.lastEventType=evId
                         if not self.eventDict[evId]['used']:
-                            self.eventDict[evId]['item'][0].setData(QBrush(Qt.darkGreen), Qt.BackgroundRole)
-                            self.eventDict[evId]['item'][1].setData(QBrush(Qt.darkGreen), Qt.BackgroundRole)
+                            self.eventDict[evId]['item'][0].setData(QBrush(Qt.GlobalColor.darkGreen), Qt.ItemDataRole.BackgroundRole)
+                            self.eventDict[evId]['item'][1].setData(QBrush(Qt.GlobalColor.darkGreen), Qt.ItemDataRole.BackgroundRole)
 
                         eventData = ''
                         attrList = ['accept','ignore','isAccepted','setAccepted','spontaneous','type']
