@@ -1,7 +1,10 @@
+import krita
 from krita import *
-try:
+
+
+if int(krita.Krita.instance().version().split('.')[0]) >= 6:
     from PyQt6 import uic
-except:
+else:
     from PyQt5 import uic
 import re
 import os

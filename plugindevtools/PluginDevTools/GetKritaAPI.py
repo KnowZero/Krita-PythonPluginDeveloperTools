@@ -1,3 +1,5 @@
+import krita
+from krita import *
 import urllib
 import urllib.request
 import zipfile
@@ -9,10 +11,12 @@ import time
 import re
 import io
 import os
-try:
+
+
+if int(krita.Krita.instance().version().split('.')[0]) >= 6:
     from PyQt6.QtCore import *
     from PyQt6.QtGui import *
-except:
+else:
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
 
