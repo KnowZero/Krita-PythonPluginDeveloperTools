@@ -1034,7 +1034,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     self.caller.centralWidget.selectorOutputLabel.setText("None")
                     self.caller.t['inspector'].loadItemInfo(self.currentWidget)
                     self.caller.t['inspector'].firstRun = True
-                    self.caller.t['inspector'].refreshItems(self.currentWidget, currentWindow)
+                    self.caller.t['inspector'].refreshItems(self.currentWidget, currentWindow, True)
                     #self.caller.t['inspector'].selectItemByRef(self.currentWidget)
                 self.currentWidget = None
 
@@ -1301,7 +1301,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 self.caller.t['selector'].stopSampling(False)
 
 
-        def refreshItems(self, currentItem = None, currentWindow = None):
+        def refreshItems(self, currentItem = None, currentWindow = None, isSampling = False):
             self.treeObjList = []
             oldText = self.caller.centralWidget.inspectorFilter.text()
             oldColumnWidth = [
@@ -1323,7 +1323,8 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
                 if indexes:
                     self.treeView.scrollTo(indexes[0], QAbstractItemView.ScrollHint.PositionAtCenter)
-            self.caller.centralWidget.inspectorFilter.setText(oldText)
+            if not isSampling:
+                self.caller.centralWidget.inspectorFilter.setText(oldText)
             self.treeView.setColumnWidth(0,oldColumnWidth[0])
             self.treeView.setColumnWidth(1,oldColumnWidth[1])
             self.treeView.setColumnWidth(2,oldColumnWidth[2])
