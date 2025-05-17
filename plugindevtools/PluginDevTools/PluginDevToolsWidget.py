@@ -1192,7 +1192,20 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
             self.caller.centralWidget.inspectorFilter.textChanged.connect(self.searchTreeFilter)
             self.caller.centralWidget.inspectorTableFilter.textChanged.connect(self.searchTableFilter)
+
+            self.caller.centralWidget.inspectorSplitter.setContextMenuPolicy(Qt.CustomContextMenu)
+            self.caller.centralWidget.inspectorSplitter.customContextMenuRequested.connect(self.splitterAdjust)
             self.firstRun = False
+            
+        def splitterAdjust(self,pos):
+            splitter = self.caller.centralWidget.inspectorSplitter
+            
+            if splitter.orientation() == Qt.Vertical:
+                if pos.y() >= splitter.sizes()[0] and pos.y() <= splitter.sizes()[0]+splitter.handleWidth():
+                    splitter.setOrientation(Qt.Horizontal)
+            else:
+                if pos.x() >= splitter.sizes()[0] and pos.x() <= splitter.sizes()[0]+splitter.handleWidth():
+                    splitter.setOrientation(Qt.Vertical)
 
         def selected(self):
             if not self.firstRun:
@@ -1290,6 +1303,13 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
         def refreshItems(self, currentItem = None, currentWindow = None):
             self.treeObjList = []
+            oldText = self.caller.centralWidget.inspectorFilter.text()
+            oldColumnWidth = [
+                self.treeView.columnWidth(0),
+                self.treeView.columnWidth(1),
+                self.treeView.columnWidth(2),
+                self.treeView.columnWidth(3),
+                ]
             self.caller.centralWidget.inspectorFilter.setText("")
             self.treeModel.clear()
             self.treeModel.setHorizontalHeaderLabels(['Class', 'Name', 'Meta Class', 'From', 'Text/Value'])
@@ -1303,6 +1323,11 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
                 if indexes:
                     self.treeView.scrollTo(indexes[0], QAbstractItemView.ScrollHint.PositionAtCenter)
+            self.caller.centralWidget.inspectorFilter.setText(oldText)
+            self.treeView.setColumnWidth(0,oldColumnWidth[0])
+            self.treeView.setColumnWidth(1,oldColumnWidth[1])
+            self.treeView.setColumnWidth(2,oldColumnWidth[2])
+            self.treeView.setColumnWidth(3,oldColumnWidth[3])
 
 
 
@@ -1496,6 +1521,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 #>>self.treeSelectModel.select(idx[0], self.treeSelectModel.SelectionFlag.Select | self.treeSelectModel.SelectionFlag.Rows )
 
         def itemSelectionChanged(self, new, old):
+            key = QGuiApplication.queryKeyboardModifiers()
             indexes = new.indexes()
             if indexes:
                 obj = self.treeObjList[indexes[0].data(101)]
@@ -1504,6 +1530,8 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     item.setIcon( Krita.instance().icon('window-close') )
                 else:
                     self.loadItemInfo( obj )
+                    if key == Qt.ControlModifier:
+                        self.treeView.expandRecursively(indexes[0])
 
         def loadItemInfo(self, obj):
             self.hideUpdateLayout()
@@ -1514,6 +1542,12 @@ Would you like to download the API details(less than 200kb of data) automaticall
             if self.showCurrentWidgetHighlight:
                 self.caller.t['selector'].setCurrentSelector(self.currentWidget, False)
 
+            oldColumnWidth = [
+                self.tableView.columnWidth(0),
+                self.tableView.columnWidth(1),
+                self.tableView.columnWidth(2),
+                ]
+            
             self.tableModel.clear()
             self.tableModel.setHorizontalHeaderLabels(['Name', "Type", 'Value'])
 
@@ -1643,6 +1677,10 @@ Would you like to download the API details(less than 200kb of data) automaticall
                         item[0].setData(meth, 101)
 
                         parentItem.appendRow(item)
+                        
+            self.tableView.setColumnWidth(0,oldColumnWidth[0])
+            self.tableView.setColumnWidth(1,oldColumnWidth[1])
+            self.tableView.setColumnWidth(2,oldColumnWidth[2])
 
         def fillMethods(self,obj, metaDict, otherMethods, inheritsFrom, prepend=''):
             meta = obj.metaObject()
