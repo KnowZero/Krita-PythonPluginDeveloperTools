@@ -13,6 +13,7 @@ import json
 import pprint
 from datetime import datetime
 import sys
+import random
 
 
 from .GetKritaAPI import *
@@ -90,8 +91,15 @@ class PluginDevToolsWidget(QWidget):
         def __init__(self, caller):
             super().__init__()
             self.caller = caller
+            self.tips = [
+                "Inspector: Right click the splitter if you want it to display vertically instead of horizontally",
+                "Inspector: Use the Event and Signal Viewer/Debugger to latch onto signals and events, be aware some events are only visible at QApplication level so if you see events missing, change widget.installEventFilter to QApplication.installEventFilter under Events",
+                "Inspector: Some fields like QString, bools, int, QSize and other can be modified in realtime by double clicking the value field as long as the field has a corresponding 'set', such as 'height' can be changed because 'setHeight' exists",
+                "Console: Use your favorite text editor as your Scripter using the buttons on the top right"
+                ]
 
         def selected(self):
+            self.caller.centralWidget.welcomeLabel.setText("Welcome to Plugin Developer Tools!\n\nRandom Tip:\n\n" + random.choice(self.tips) )
             pass
 
         def unselected(self):
@@ -1193,19 +1201,18 @@ Would you like to download the API details(less than 200kb of data) automaticall
             self.caller.centralWidget.inspectorFilter.textChanged.connect(self.searchTreeFilter)
             self.caller.centralWidget.inspectorTableFilter.textChanged.connect(self.searchTableFilter)
 
-            self.caller.centralWidget.inspectorSplitter.setContextMenuPolicy(Qt.CustomContextMenu)
-            self.caller.centralWidget.inspectorSplitter.customContextMenuRequested.connect(self.splitterAdjust)
+            self.splitHandle = self.caller.centralWidget.inspectorSplitter.handle(1)
+            self.splitHandle.setToolTip("Right click to change orientation")
+            self.splitHandle.setContextMenuPolicy(Qt.CustomContextMenu)
+            self.splitHandle.customContextMenuRequested.connect(self.splitterAdjust)
             self.firstRun = False
             
         def splitterAdjust(self,pos):
-            splitter = self.caller.centralWidget.inspectorSplitter
-            
-            if splitter.orientation() == Qt.Vertical:
-                if pos.y() >= splitter.sizes()[0] and pos.y() <= splitter.sizes()[0]+splitter.handleWidth():
-                    splitter.setOrientation(Qt.Horizontal)
+           
+            if self.splitHandle.orientation() == Qt.Vertical:
+                    self.splitHandle.splitter().setOrientation(Qt.Horizontal)
             else:
-                if pos.x() >= splitter.sizes()[0] and pos.x() <= splitter.sizes()[0]+splitter.handleWidth():
-                    splitter.setOrientation(Qt.Vertical)
+                    self.splitHandle.splitter().setOrientation(Qt.Vertical)
 
         def selected(self):
             if not self.firstRun:

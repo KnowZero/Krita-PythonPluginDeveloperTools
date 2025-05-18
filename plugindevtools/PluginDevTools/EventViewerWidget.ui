@@ -43,6 +43,9 @@
      </property>
      <item>
       <widget class="QToolButton" name="startBtn">
+      <property name="toolTip">
+       <string>Start/Stop monitoring events</string>
+      </property>
        <property name="text">
         <string>...</string>
        </property>
@@ -54,6 +57,9 @@
      </item>
      <item>
       <widget class="QToolButton" name="clearBtn">
+      <property name="toolTip">
+       <string>Clear events</string>
+      </property>
        <property name="text">
         <string>...</string>
        </property>
@@ -65,6 +71,14 @@
      </item>
      <item>
       <widget class="QComboBox" name="outputCmb">
+      <property name="toolTip">
+       <string>Where to output?
+         ev = where events are outputed
+         std = where stdout/stderr is outputted
+         show = show events/stdout/stderr into this gui
+         terminal = show events/stdout/stderr into terminal
+       </string>
+      </property>
        <item>
         <property name="text">
          <string>ev: show|std: terminal</string>
@@ -84,6 +98,13 @@
      </item>
      <item>
       <widget class="QComboBox" name="formatOutputCmb">
+       <property name="toolTip">
+        <string>How to handle duplicate signal/event output in a row?
+         First = show only first, ignore the rest
+         All folded = Show them all but fold them
+         All unfolded = Show them all unfolded
+        </string>
+       </property>
        <item>
         <property name="text">
          <string>First only</string>
@@ -186,6 +207,13 @@
         </property>
         <item>
          <widget class="QComboBox" name="eventFilterTypeCmb">
+          <property name="toolTip">
+            <string>Events are monitored via installEventFilter.
+              widget.installEventFilter = installs the event filter on the widget itself
+              QApplication.instance().installEventFilter = installs event filter on the QApplication.
+               (This is slower than widget as QApplication process a lot of events, but some events don't bubble down and this is the only way)
+            </string>
+          </property>
           <item>
            <property name="text">
             <string>widget.installEventFilter(self)</string>

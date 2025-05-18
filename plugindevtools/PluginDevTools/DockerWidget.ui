@@ -343,6 +343,9 @@
             <layout class="QHBoxLayout" name="horizontalLayout_5">
              <item>
               <widget class="QToolButton" name="consoleClearBtn">
+               <property name="toolTip">
+                <string>Clear Console</string>
+               </property>
                <property name="text">
                 <string>...</string>
                </property>
@@ -377,6 +380,9 @@
              </item>
              <item>
               <widget class="QToolButton" name="consoleTempScriptFileBtn">
+               <property name="toolTip">
+                <string>Create a temporary file and open it in a default text editor. If execute on save is selected, saving will automatically execute the script inside krita making your favorite text editor work like scripter</string>
+               </property>
                <property name="text">
                 <string>...</string>
                </property>
@@ -387,6 +393,9 @@
              </item>
              <item>
               <widget class="QToolButton" name="consoleSetScriptFileBtn">
+               <property name="toolTip">
+                 <string>Pick a file and open it in a default text editor. If execute on save is selected, saving will automatically execute the script inside krita making your favorite text editor work like scripter</string>
+               </property>
                <property name="text">
                 <string>...</string>
                </property>
