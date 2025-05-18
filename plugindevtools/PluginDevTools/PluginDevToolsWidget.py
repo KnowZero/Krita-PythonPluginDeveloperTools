@@ -1,5 +1,7 @@
 from krita import *
 try:
+    if int(qVersion().split('.')[0]) == 5:
+        raise
     from PyQt6 import QtCore, QtGui, QtWidgets, QtSvg, uic
 except:
     from PyQt5 import QtCore, QtGui, QtWidgets, QtSvg, uic
@@ -1207,16 +1209,18 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
             self.splitHandle = self.caller.centralWidget.inspectorSplitter.handle(1)
             self.splitHandle.setToolTip("Right click to change orientation")
-            self.splitHandle.setContextMenuPolicy(Qt.CustomContextMenu)
+            self.splitHandle.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
             self.splitHandle.customContextMenuRequested.connect(self.splitterAdjust)
             self.firstRun = False
             
+            self.cacheItems = []
+            
         def splitterAdjust(self,pos):
            
-            if self.splitHandle.orientation() == Qt.Vertical:
-                    self.splitHandle.splitter().setOrientation(Qt.Horizontal)
+            if self.splitHandle.orientation() == Qt.Orientation.Vertical:
+                    self.splitHandle.splitter().setOrientation(Qt.Orientation.Horizontal)
             else:
-                    self.splitHandle.splitter().setOrientation(Qt.Vertical)
+                    self.splitHandle.splitter().setOrientation(Qt.Orientation.Vertical)
 
         def selected(self):
             if not self.firstRun:
@@ -1542,7 +1546,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
                     item.setIcon( Krita.instance().icon('window-close') )
                 else:
                     self.loadItemInfo( obj )
-                    if key == Qt.ControlModifier:
+                    if key == Qt.KeyboardModifier.ControlModifier:
                         self.treeView.expandRecursively(indexes[0])
 
         def loadItemInfo(self, obj):

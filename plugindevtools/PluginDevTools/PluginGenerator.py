@@ -1,5 +1,7 @@
 from krita import *
 try:
+    if int(qVersion().split('.')[0]) == 5:
+        raise
     from PyQt6 import uic
 except:
     from PyQt5 import uic

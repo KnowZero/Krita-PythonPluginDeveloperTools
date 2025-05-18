@@ -9,7 +9,10 @@ import time
 import re
 import io
 import os
+import krita
 try:
+    if int(krita.qVersion().split('.')[0]) == 5:
+        raise
     from PyQt6.QtCore import *
     from PyQt6.QtGui import *
 except:
