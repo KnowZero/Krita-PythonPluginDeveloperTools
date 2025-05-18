@@ -227,14 +227,15 @@ class PluginDevToolsWidget(QWidget):
                 methodItem.setData( self.formatDoc(prop['doc']), 101 )
 
 
-            for k in dir(krita):
+            kd = krita.api if hasattr(krita,'api') else krita
+            for k in dir(kd):
                 if k.startswith('__') or k == 'Krita': continue
                 item = QStandardItem(k)
 
                 extraData = None
+                classMeta = getattr(kd, k)
 
-                classMeta = getattr(krita, k)
-                metaDict = self.genMethodList( k, classMeta, classMeta.__dict__ )
+                metaDict = self.genMethodList( k, classMeta, getattr(classMeta,'__dict__') )
 
 
 
