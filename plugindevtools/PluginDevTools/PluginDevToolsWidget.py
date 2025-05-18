@@ -31,12 +31,20 @@ class PluginDevToolsWidget(QWidget):
         if settingsData.startswith('{'):
             self.settings = json.loads(settingsData)
 
-
+        self.tips = [
+            "Inspector: Right click the splitter if you want it to display vertically instead of horizontally",
+            "Inspector: Use the Event and Signal Viewer/Debugger to latch onto signals and events, be aware some events are only visible at QApplication level so if you see events missing, change widget.installEventFilter to QApplication.installEventFilter under Events",
+            "Inspector: Some fields like QString, bools, int, QSize and other can be modified in realtime by double clicking the value field as long as the field has a corresponding 'set', such as 'height' can be changed because 'setHeight' exists",
+            "Console: Use your favorite text editor as your Scripter using the buttons on the top right",
+            "To easily create a plugin with a template, go to Tools->Scripts->PluginDevTools"
+            ]
 
         self.kritaAPI = {}
 
         self.centralWidget = uic.loadUi(os.path.dirname(os.path.realpath(__file__)) + '/DockerWidget.ui')
-
+        
+        self.newTip()
+        
         for i in range(0,self.centralWidget.tabWidget.count()):
             name = self.centralWidget.tabWidget.widget(i).objectName().replace('Tab','')
             if name not in self.settings:
@@ -51,7 +59,8 @@ class PluginDevToolsWidget(QWidget):
         self.centralWidget.tabWidget.setTabIcon( 0, Krita.instance().icon('pivot-point') )
         self.centralWidget.tabWidget.currentChanged.connect(self.tabChanged)
 
-
+    def newTip(self):
+        self.centralWidget.welcomeLabel.setText("Welcome to Plugin Developer Tools!\n\nRandom Tip:\n\n" + random.choice(self.tips) )
 
 
     def windowCreatedSetup(self):
@@ -91,15 +100,10 @@ class PluginDevToolsWidget(QWidget):
         def __init__(self, caller):
             super().__init__()
             self.caller = caller
-            self.tips = [
-                "Inspector: Right click the splitter if you want it to display vertically instead of horizontally",
-                "Inspector: Use the Event and Signal Viewer/Debugger to latch onto signals and events, be aware some events are only visible at QApplication level so if you see events missing, change widget.installEventFilter to QApplication.installEventFilter under Events",
-                "Inspector: Some fields like QString, bools, int, QSize and other can be modified in realtime by double clicking the value field as long as the field has a corresponding 'set', such as 'height' can be changed because 'setHeight' exists",
-                "Console: Use your favorite text editor as your Scripter using the buttons on the top right"
-                ]
+
 
         def selected(self):
-            self.caller.centralWidget.welcomeLabel.setText("Welcome to Plugin Developer Tools!\n\nRandom Tip:\n\n" + random.choice(self.tips) )
+            self.caller.newTip()
             pass
 
         def unselected(self):
@@ -922,7 +926,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
                 for action in  Krita.instance().actions():
                     parentItem.appendRow([
-                        QStandardItem( action.objectName() ),
+                        QStandardItem(action.icon(), action.objectName() ),
                         QStandardItem( action.toolTip() )
                     ])
                     #print ( action.objectName(), action.toolTip() )
