@@ -2,10 +2,10 @@ from krita import *
 try:
     if int(qVersion().split('.')[0]) == 5:
         raise
-    from PyQt6 import QtCore, QtGui, QtWidgets, QtSvg, uic
+    from PyQt6 import QtCore, QtGui, QtWidgets, QtSvg, uic, sip
 except:
     from PyQt5 import QtCore, QtGui, QtWidgets, QtSvg, uic
-import sip
+    import sip
 import pprint
 import time
 from contextlib import redirect_stdout
