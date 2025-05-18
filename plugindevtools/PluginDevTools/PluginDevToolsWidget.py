@@ -2022,15 +2022,16 @@ Would you like to download the API details(less than 200kb of data) automaticall
                 self.eventItemHeader.setData('event',101)
                 self.eventItemHeader.setData(-11,102)
 
-                for evName in dir(QEvent):
-                    attr = getattr(QEvent,evName)
+                eventType = QEvent if hasattr(QEvent,'ActionAdded') else QEvent.Type
+                for evName in dir(eventType):
+                    attr = getattr(eventType,evName)
                     if isinstance(attr,QEvent.Type):
-                        self.eventDict[attr]={ 'name': evName, 'doc': evName+'(obj, event)', 'active': 1, 'item': None, 'used': False, 'code':'' }
+                        self.eventDict[int(attr)]={ 'name': evName, 'doc': evName+'(obj, event)', 'active': 1, 'item': None, 'used': False, 'code':'' }
 
                 for evId in sorted(self.eventDict.keys()):
                     self.eventDict[evId]['item'] = [
                         QStandardItem( Krita.instance().icon('visible'), '' ),
-                        QStandardItem('['+str(evId)+'] '+self.eventDict[evId]['name'])
+                        QStandardItem('['+str(int(evId))+'] '+self.eventDict[evId]['name'])
                     ]
                     self.eventDict[evId]['item'][0].setData('event',101)
                     self.eventDict[evId]['item'][0].setData(evId,102)
@@ -2259,7 +2260,7 @@ Would you like to download the API details(less than 200kb of data) automaticall
 
 
             def eventFilter(self, obj, event):
-                evId = event.type()
+                evId = int(event.type())
                 if evId in self.eventDict and self.eventDict[evId]['active'] > 0 and obj == self.currentWidget:
                     eventDataDict = {}
                     foldMode = self.centralWidget.formatOutputCmb.currentIndex()
