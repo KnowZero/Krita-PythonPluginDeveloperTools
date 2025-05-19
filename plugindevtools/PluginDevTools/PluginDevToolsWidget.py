@@ -38,7 +38,7 @@ class PluginDevToolsWidget(QWidget):
             "Inspector: Use the Event and Signal Viewer/Debugger to latch onto signals and events, be aware some events are only visible at QApplication level so if you see events missing, change widget.installEventFilter to QApplication.installEventFilter under Events",
             "Inspector: Some fields like QString, bools, int, QSize and other can be modified in realtime by double clicking the value field as long as the field has a corresponding 'set', such as 'height' can be changed because 'setHeight' exists",
             "Console: Use your favorite text editor as your Scripter using the buttons on the top right",
-            "To easily create a plugin with a template, go to Tools->Scripts->PluginDevTools"
+            "To easily create a plugin with a template, go to Tools->Scripts->PluginDevTools->Create your own new plugin generator..."
             ]
 
         self.kritaAPI = {}

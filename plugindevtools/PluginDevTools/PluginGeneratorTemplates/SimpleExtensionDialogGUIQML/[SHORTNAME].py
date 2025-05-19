@@ -1,8 +1,15 @@
-'''[%AUTOCOMPLETE%]'''
+import krita
+import os
 try:
+    if int(krita.qVersion().split('.')[0]) == 5:
+        raise
     from PyQt6 import uic
+    from PyQt6.QtWidgets import *
 except:
     from PyQt5 import uic
+    from PyQt5.QtWidgets import *
+
+'''[%AUTOCOMPLETE%]'''
 
 class '''[%SHORTNAME%]'''Dialog(QDialog):
     
