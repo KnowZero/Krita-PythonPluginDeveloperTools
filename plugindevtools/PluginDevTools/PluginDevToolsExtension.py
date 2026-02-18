@@ -25,7 +25,7 @@ class PluginDevToolsTestExtension(Extension):
         pass
 
     def createActions(self, window: Window):
-        action = window.createAction('PluginDevTools', 'PluginDevTools', 'tools/scripts/PluginDevTools')
+        action = window.createAction('PluginDevTools', 'PluginDevTools', 'tools/scripts')
         self.menu = QMenu('PluginDevTools', window.qwindow())
         action.setMenu(self.menu)
         # Add some fixed Action here:
